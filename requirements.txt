@@ -1,0 +1,3 @@
+python-slugify==3.0.2
+hdx-python-api==3.7.1
+-r docker-requirements.txt
