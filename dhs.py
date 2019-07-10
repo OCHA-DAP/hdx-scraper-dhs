@@ -20,11 +20,13 @@ logger = logging.getLogger(__name__)
 
 hxlate_start = '&name=DHSHXL&header-row=1&tagger-match-all=on&tagger-01-header=dataid&tagger-01-tag=%23meta%2Bid&tagger-02-header=indicator&tagger-02-tag=%23indicator%2Bname&tagger-03-header=value&tagger-03-tag=%23indicator%2Bnum&tagger-04-header=precision&tagger-04-tag=%23indicator%2Bprecision&tagger-06-header=countryname&tagger-06-tag=%23country%2Bname&tagger-07-header=surveyyear&tagger-07-tag=%23date%2Byear&tagger-08-header=surveyid&tagger-08-tag=%23survey%2Bid&tagger-09-header=indicatorid&tagger-09-tag=%23indicator%2Bid'
 
-hxlate_sn_tag = '&tagger-10-header=CharacteristicLabel&tagger-10-tag=%23meta%2Bcharacteristic'
+hxlate_sn_1 = '&tagger-10-header=CharacteristicLabel&tagger-10-tag=%23meta%2Bcharacteristic&filter01=add&add-tag01=%23loc%2Bname&add-value01=%7B%7B%23meta%2Bcharacteristic%7D%7D&add-header01=Location&add-before01=on'
 
-hxlate_filter = '&filter01=add&add-tag01=%23country%2Bcode&add-value01=%s&add-header01=ISO3'
+hxlate_n_1 = '&filter01=add&add-tag01=%23country%2Bcode&add-value01=COUNTRYISO&add-header01=ISO3&add-before01=on'
 
-hxlate_sn_filters = '&filter02=add&add-tag02=%23adm1%2Bname&add-value02=%7B%7B%23meta%2Bcharacteristic%7D%7D&add-header02=Admin+1+if+relevant&filter03=replace-map&replace-map-url03=https%3A%2F%2Fraw.githubusercontent.com%2Fmcarans%2Fdhs_hxl_quickcharts%2Fmaster%2Fhxl_replacement_values.csv&replace-map-where03=%23adm1%2Bname%21~.%5C.%5C.%2A&filter04=replace&replace-pattern04=%5C.%5C.%28.%2A%29&replace-regex04=on&replace-value04=%5C1&replace-tags04=%23adm1%2Bname&replace-where04=%23adm1%2Bname~%5C.%5C..%2A'
+hxlate_sn_2 = hxlate_n_1.replace('01', '02')
+
+hxlate_sn_3 = '&filter03=replace&replace-pattern03=%5C.%5C.%28.%2A%29&replace-regex03=on&replace-value03=%5C1&replace-tags03=%23loc%2Bname&replace-where03=%23loc%2Bname~%5C.%5C..%2A'
 
 quickchart_resourceno = 1
 
@@ -104,7 +106,7 @@ def generate_dataset_and_showcase(base_url, hxlproxy_url, downloader, countrydat
     dataset.set_expected_update_frequency('Live')
     dataset.set_subnational(True)
     dataset.add_country_location(countryiso)
-    tags = ['HXL', 'health', 'demographics']
+    tags = ['hxl', 'health', 'demographics']
     dataset.add_tags(tags)
     earliest_year, latest_year = get_datecoverage(base_url, downloader, dhscountrycode)
     if earliest_year is None:
@@ -116,7 +118,7 @@ def generate_dataset_and_showcase(base_url, hxlproxy_url, downloader, countrydat
     for dhstag in dhstags:
         # dhs_country_url = '%sdata/%s?tagids=%s&breakdown=national&perpage=10000&apiKey=%s&f=csv' % (base_url, dhscountrycode, dhstag['TagID'], apikey)
         dhs_country_url = '%sdata/%s?tagids=%s&breakdown=national&perpage=10000&f=csv' % (base_url, dhscountrycode, dhstag['TagID'])
-        hxl_url = '%s%s' % (hxlate_start, hxlate_filter % countryiso)
+        hxl_url = '%s%s' % (hxlate_start, hxlate_n_1.replace('COUNTRYISO', countryiso))
         url = '%surl=%s%s' % (hxlproxy_url, quote_plus(dhs_country_url), hxl_url)
 
         tagname = dhstag['TagName']
@@ -128,7 +130,7 @@ def generate_dataset_and_showcase(base_url, hxlproxy_url, downloader, countrydat
         }
         dataset.add_update_resource(resource)
 
-        hxl_url = '%s%s%s%s' % (hxlate_start, hxlate_sn_tag, hxlate_filter, hxlate_sn_filters)
+        hxl_url = '%s%s%s%s' % (hxlate_start, hxlate_sn_1, hxlate_sn_2.replace('COUNTRYISO', countryiso), hxlate_sn_3)
         url = '%surl=%s%s' % (hxlproxy_url, quote_plus(dhs_country_url.replace('breakdown=national', 'breakdown=subnational')), hxl_url)
         resource = {
             'name': slugify('%s_subnational' % tagname),
