@@ -37,7 +37,7 @@ def main():
             if dataset:
                 dataset.update_from_yaml()
                 dataset['license_other'] = dataset['license_other'].replace('\n', '  \n')  # ensure markdown has line breaks
-                dataset.create_in_hdx(remove_additional_resources=True)
+                dataset.create_in_hdx(remove_additional_resources=True, hxl_update=False)
                 resource_view = generate_resource_view(dataset)
                 resource_view.create_in_hdx()
                 showcase.create_in_hdx()
@@ -45,4 +45,4 @@ def main():
 
 
 if __name__ == '__main__':
-    facade(main, hdx_site='feature', user_agent_config_yaml=join(expanduser('~'), '.useragents.yml'), user_agent_lookup=lookup, project_config_yaml=join('config', 'project_configuration.yml'))
+    facade(main, user_agent_config_yaml=join(expanduser('~'), '.useragents.yml'), user_agent_lookup=lookup, project_config_yaml=join('config', 'project_configuration.yml'))
