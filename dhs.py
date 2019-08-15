@@ -18,7 +18,7 @@ from slugify import slugify
 
 logger = logging.getLogger(__name__)
 
-hxlate_start = '&name=DHSHXL&header-row=1&tagger-match-all=on&tagger-01-header=dataid&tagger-01-tag=%23meta%2Bid&tagger-02-header=indicator&tagger-02-tag=%23indicator%2Bname&tagger-03-header=value&tagger-03-tag=%23indicator%2Bnum&tagger-04-header=precision&tagger-04-tag=%23indicator%2Bprecision&tagger-06-header=countryname&tagger-06-tag=%23country%2Bname&tagger-07-header=surveyyear&tagger-07-tag=%23date%2Byear&tagger-08-header=surveyid&tagger-08-tag=%23survey%2Bid&tagger-09-header=indicatorid&tagger-09-tag=%23indicator%2Bid'
+hxlate_start = '&name=DHSHXL&header-row=1&tagger-match-all=on&tagger-01-header=dataid&tagger-01-tag=%23meta%2Bid&tagger-02-header=indicator&tagger-02-tag=%23indicator%2Bname&tagger-03-header=value&tagger-03-tag=%23indicator%2Bvalue%2Bnum&tagger-04-header=precision&tagger-04-tag=%23indicator%2Bprecision&tagger-06-header=countryname&tagger-06-tag=%23country%2Bname&tagger-07-header=surveyyear&tagger-07-tag=%23date%2Byear&tagger-08-header=surveyid&tagger-08-tag=%23survey%2Bid&tagger-09-header=indicatorid&tagger-09-tag=%23indicator%2Bcode'
 
 hxlate_sn_1 = '&tagger-10-header=CharacteristicLabel&tagger-10-tag=%23meta%2Bcharacteristic&filter01=add&add-tag01=%23loc%2Bname&add-value01=%7B%7B%23meta%2Bcharacteristic%7D%7D&add-header01=Location&add-before01=on'
 
@@ -117,23 +117,24 @@ def generate_dataset_and_showcase(base_url, hxlproxy_url, downloader, countrydat
     # apikey= downloader.session.params['apiKey']
     for dhstag in dhstags:
         # dhs_country_url = '%sdata/%s?tagids=%s&breakdown=national&perpage=10000&apiKey=%s&f=csv' % (base_url, dhscountrycode, dhstag['TagID'], apikey)
+        tagname = dhstag['TagName']
+        resource_name = 'National %s' % tagname
         dhs_country_url = '%sdata/%s?tagids=%s&breakdown=national&perpage=10000&f=csv' % (base_url, dhscountrycode, dhstag['TagID'])
         hxl_url = '%s%s' % (hxlate_start, hxlate_n_1.replace('COUNTRYISO', countryiso))
-        url = '%surl=%s%s' % (hxlproxy_url, quote_plus(dhs_country_url), hxl_url)
+        url = '%s%s.csv?url=%s%s' % (hxlproxy_url, resource_name, quote_plus(dhs_country_url), hxl_url)
 
-        tagname = dhstag['TagName']
         resource = {
-            'name': slugify('%s_national' % tagname),
+            'name': resource_name,
             'description': 'National Data: %s' % tagname,
             'format': 'csv',
             'url': url
         }
         dataset.add_update_resource(resource)
-
+        resource_name = 'Subnational %s' % tagname
         hxl_url = '%s%s%s%s' % (hxlate_start, hxlate_sn_1, hxlate_sn_2.replace('COUNTRYISO', countryiso), hxlate_sn_3)
-        url = '%surl=%s%s' % (hxlproxy_url, quote_plus(dhs_country_url.replace('breakdown=national', 'breakdown=subnational')), hxl_url)
+        url = '%s%s.csv?url=%s%s' % (hxlproxy_url, resource_name, quote_plus(dhs_country_url.replace('breakdown=national', 'breakdown=subnational')), hxl_url)
         resource = {
-            'name': slugify('%s_subnational' % tagname),
+            'name': resource_name,
             'description': 'Subnational Data: %s' % tagname,
             'format': 'csv',
             'url': url
