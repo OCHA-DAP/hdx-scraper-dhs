@@ -12,9 +12,6 @@ from hdx.utilities.downloader import Download
 
 from dhs import get_countriesdata, generate_dataset_and_showcase, generate_resource_view, get_tags
 
-from hdx.facades import logging_kwargs
-logging_kwargs['smtp_config_yaml'] = join('config', 'smtp_configuration.yml')
-
 from hdx.facades.simple import facade
 
 logger = logging.getLogger(__name__)
