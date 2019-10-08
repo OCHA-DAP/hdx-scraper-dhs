@@ -28,8 +28,6 @@ hxlate_sn_2 = hxlate_n_1.replace('01', '02')
 
 hxlate_sn_3 = '&filter03=replace&replace-pattern03=%5C.%5C.%28.%2A%29&replace-regex03=on&replace-value03=%5C1&replace-tags03=%23loc%2Bname&replace-where03=%23loc%2Bname~%5C.%5C..%2A'
 
-quickchart_resourceno = 1
-
 
 def get_countriesdata(base_url, downloader):
     url = '%scountries' % base_url
