@@ -10,7 +10,7 @@ from os.path import join, expanduser
 from hdx.hdx_configuration import Configuration
 from hdx.utilities.downloader import Download
 
-from dhs import get_countriesdata, generate_dataset_and_showcase, generate_resource_view, get_tags
+from dhs import get_countriesdata, generate_dataset_and_showcase, get_tags
 
 from hdx.facades.simple import facade
 
@@ -35,8 +35,7 @@ def main():
                 dataset.update_from_yaml()
                 dataset['license_other'] = dataset['license_other'].replace('\n', '  \n')  # ensure markdown has line breaks
                 dataset.create_in_hdx(remove_additional_resources=True, hxl_update=False)
-                resource_view = generate_resource_view(dataset)
-                resource_view.create_in_hdx()
+                dataset.generate_resource_view(1)
                 showcase.create_in_hdx()
                 showcase.add_dataset(dataset)
 

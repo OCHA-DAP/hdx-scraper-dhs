@@ -141,8 +141,6 @@ def generate_dataset_and_showcase(base_url, hxlproxy_url, downloader, countrydat
         }
         dataset.add_update_resource(resource)
 
-    dataset.set_quickchart_resource(quickchart_resourceno)
-
     publication = get_publication(base_url, downloader, dhscountrycode)
     showcase = Showcase({
         'name': '%s-showcase' % slugified_name,
@@ -153,9 +151,3 @@ def generate_dataset_and_showcase(base_url, hxlproxy_url, downloader, countrydat
     })
     showcase.add_tags(tags)
     return dataset, showcase
-
-
-def generate_resource_view(dataset):
-    resourceview = ResourceView({'resource_id': dataset.get_resource(quickchart_resourceno)['id']})
-    resourceview.update_from_yaml()
-    return resourceview
