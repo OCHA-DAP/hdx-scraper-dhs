@@ -4,19 +4,15 @@
 Unit tests for DHS
 
 """
-import copy
-import datetime
 from os.path import join
 
 import pytest
-from hdx.data.dataset import Dataset
 from hdx.data.vocabulary import Vocabulary
 from hdx.hdx_configuration import Configuration
 from hdx.hdx_locations import Locations
 from hdx.location.country import Country
 
-from dhs import generate_dataset_and_showcase, get_countriesdata, generate_resource_view, get_tags, get_datecoverage, \
-    get_publication
+from dhs import generate_dataset_and_showcase, get_countriesdata, get_tags, get_datecoverage, get_publication
 
 
 class TestDHS():
