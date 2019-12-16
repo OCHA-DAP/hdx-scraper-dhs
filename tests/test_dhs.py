@@ -11,12 +11,17 @@ from hdx.data.vocabulary import Vocabulary
 from hdx.hdx_configuration import Configuration
 from hdx.hdx_locations import Locations
 from hdx.location.country import Country
+from hdx.utilities.compare import assert_files_same
+from hdx.utilities.dictandlist import read_list_from_csv
+from hdx.utilities.downloader import DownloadError
+from hdx.utilities.path import temp_dir
 
-from dhs import generate_dataset_and_showcase, get_countriesdata, get_tags, get_datecoverage, get_publication
+from dhs import generate_datasets_and_showcase, get_countries, get_tags, get_datecoverage, get_publication
 
 
 class TestDHS():
     countrydata = {'UNAIDS_CountryCode': 'AFG', 'SubregionName': 'South Asia', 'WHO_CountryCode': 'AF', 'FIPS_CountryCode': 'AF', 'ISO2_CountryCode': 'AF', 'ISO3_CountryCode': 'AFG', 'RegionOrder': 41, 'DHS_CountryCode': 'AF', 'CountryName': 'Afghanistan', 'UNICEF_CountryCode': 'AFG', 'UNSTAT_CountryCode': 'AFG', 'RegionName': 'South & Southeast Asia'}
+    country = {'iso3': 'AFG', 'dhscode': 'AF'}
     tags = [{'TagType': 2, 'TagName': 'DHS Quickstats', 'TagID': 0, 'TagOrder': 0}, {'TagType': 2, 'TagName': 'DHS Mobile', 'TagID': 77, 'TagOrder': 1}]
     datecoverage = '2015'
     publications = [{'PublicationURL': 'https://www.dhsprogram.com/pubs/pdf/SR186/SR186.pdf', 'PublicationTitle': 'Mortality Survey Key Findings 2009', 'SurveyId': 'AF2009OTH', 'SurveyType': 'OTH', 'ThumbnailURL': 'https://www.dhsprogram.com/publications/images/thumbnails/SR186.jpg', 'SurveyYear': 2009, 'PublicationSize': 2189233, 'DHS_CountryCode': 'AF', 'PublicationId': 11072, 'PublicationDescription': 'Afghanistan AMS 2009 Summary Report'},
@@ -27,17 +32,25 @@ class TestDHS():
                     {'PublicationURL': 'https://www.dhsprogram.com/pubs/pdf/OF35/OF35.C.pdf', 'PublicationTitle': 'Afghanistan DHS 2015 - 8 Regional Fact Sheets', 'SurveyId': 'AF2015DHS', 'SurveyType': 'DHS', 'ThumbnailURL': 'https://www.dhsprogram.com/publications/images/thumbnails/OF35.jpg', 'SurveyYear': 2015, 'PublicationSize': 926663, 'DHS_CountryCode': 'AF', 'PublicationId': 1748, 'PublicationDescription': 'Afghanistan DHS 2015 - Capital Region Fact Sheet'},
                     {'PublicationURL': 'https://www.dhsprogram.com/pubs/pdf/FR248/FR248.pdf', 'PublicationTitle': 'Mortality Survey Final Report2', 'SurveyId': 'AF2010OTH', 'SurveyType': 'OTH', 'ThumbnailURL': 'https://www.dhsprogram.com/publications/images/thumbnails/FR248.jpg', 'SurveyYear': 2010, 'PublicationSize': 3457803, 'DHS_CountryCode': 'AF', 'PublicationId': 11062, 'PublicationDescription': 'Afghanistan Mortality Survey 2010'},
                     {'PublicationURL': 'https://www.dhsprogram.com/pubs/pdf/FR323/FR323.pdf', 'PublicationTitle': 'Final Report', 'SurveyId': 'AF2015DHS', 'SurveyType': 'DHS', 'ThumbnailURL': 'https://www.dhsprogram.com/publications/images/thumbnails/FR323.jpg', 'SurveyYear': 2015, 'PublicationSize': 10756438, 'DHS_CountryCode': 'AF', 'PublicationId': 1713, 'PublicationDescription': 'Afghanistan Demographic and Health Survey 2015'}]
-    dataset = {'name': 'dhs-data-for-afghanistan', 'title': 'Afghanistan - Demographic and Health Data',
+    dataset = {'name': 'dhs-data-for-afghanistan', 'title': 'Afghanistan - National Demographic and Health Data',
+               'notes': 'Contains data from the [DHS data portal](https://api.dhsprogram.com/). There is also a dataset containing [Afghanistan - Subnational Demographic and Health Data](https://feature-data.humdata.org/dataset/dhs-subnational-data-for-afghanistan) on HDX.\n\nThe DHS Program Application Programming Interface (API) provides software developers access to aggregated indicator data from The Demographic and Health Surveys (DHS) Program. The API can be used to create various applications to help analyze, visualize, explore and disseminate data on population, health, HIV, and nutrition from more than 90 countries.',
                'maintainer': '196196be-6037-4488-8b71-d786adf4c081', 'owner_org': '45e7c1a1-196f-40a5-a715-9d6e934a7f70',
-               'data_update_frequency': '0', 'subnational': '1', 'groups': [{'name': 'afg'}],
+               'data_update_frequency': '365', 'subnational': '0', 'groups': [{'name': 'afg'}],
                'tags': [{'name': 'hxl', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'},
                         {'name': 'health', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'},
                         {'name': 'demographics', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}],
                'dataset_date': '01/01/2015-12/31/2015'}
-    resources = [{'name': 'National DHS Quickstats', 'description': 'National Data: DHS Quickstats', 'format': 'csv', 'url': 'https://proxy.hxlstandard.org/data/download/National DHS Quickstats.csv?url=http%3A%2F%2Fhaha%2Fdata%2FAF%3Ftagids%3D0%26breakdown%3Dnational%26perpage%3D10000%26f%3Dcsv&name=DHSHXL&header-row=1&tagger-match-all=on&tagger-01-header=dataid&tagger-01-tag=%23meta%2Bid&tagger-02-header=indicator&tagger-02-tag=%23indicator%2Bname&tagger-03-header=value&tagger-03-tag=%23indicator%2Bvalue%2Bnum&tagger-04-header=precision&tagger-04-tag=%23indicator%2Bprecision&tagger-06-header=countryname&tagger-06-tag=%23country%2Bname&tagger-07-header=surveyyear&tagger-07-tag=%23date%2Byear&tagger-08-header=surveyid&tagger-08-tag=%23survey%2Bid&tagger-09-header=indicatorid&tagger-09-tag=%23indicator%2Bcode&filter01=add&add-tag01=%23country%2Bcode&add-value01=AFG&add-header01=ISO3&add-before01=on', 'resource_type': 'api', 'url_type': 'api'},
-                 {'name': 'Subnational DHS Quickstats', 'description': 'Subnational Data: DHS Quickstats', 'format': 'csv', 'url': 'https://proxy.hxlstandard.org/data/download/Subnational DHS Quickstats.csv?url=http%3A%2F%2Fhaha%2Fdata%2FAF%3Ftagids%3D0%26breakdown%3Dsubnational%26perpage%3D10000%26f%3Dcsv&name=DHSHXL&header-row=1&tagger-match-all=on&tagger-01-header=dataid&tagger-01-tag=%23meta%2Bid&tagger-02-header=indicator&tagger-02-tag=%23indicator%2Bname&tagger-03-header=value&tagger-03-tag=%23indicator%2Bvalue%2Bnum&tagger-04-header=precision&tagger-04-tag=%23indicator%2Bprecision&tagger-06-header=countryname&tagger-06-tag=%23country%2Bname&tagger-07-header=surveyyear&tagger-07-tag=%23date%2Byear&tagger-08-header=surveyid&tagger-08-tag=%23survey%2Bid&tagger-09-header=indicatorid&tagger-09-tag=%23indicator%2Bcode&tagger-10-header=CharacteristicLabel&tagger-10-tag=%23meta%2Bcharacteristic&filter01=add&add-tag01=%23loc%2Bname&add-value01=%7B%7B%23meta%2Bcharacteristic%7D%7D&add-header01=Location&add-before01=on&filter02=add&add-tag02=%23country%2Bcode&add-value02=AFG&add-header02=ISO3&add-before02=on&filter03=replace&replace-pattern03=%5C.%5C.%28.%2A%29&replace-regex03=on&replace-value03=%5C1&replace-tags03=%23loc%2Bname&replace-where03=%23loc%2Bname~%5C.%5C..%2A', 'resource_type': 'api', 'url_type': 'api'},
-                 {'name': 'National DHS Mobile', 'description': 'National Data: DHS Mobile', 'format': 'csv', 'url': 'https://proxy.hxlstandard.org/data/download/National DHS Mobile.csv?url=http%3A%2F%2Fhaha%2Fdata%2FAF%3Ftagids%3D77%26breakdown%3Dnational%26perpage%3D10000%26f%3Dcsv&name=DHSHXL&header-row=1&tagger-match-all=on&tagger-01-header=dataid&tagger-01-tag=%23meta%2Bid&tagger-02-header=indicator&tagger-02-tag=%23indicator%2Bname&tagger-03-header=value&tagger-03-tag=%23indicator%2Bvalue%2Bnum&tagger-04-header=precision&tagger-04-tag=%23indicator%2Bprecision&tagger-06-header=countryname&tagger-06-tag=%23country%2Bname&tagger-07-header=surveyyear&tagger-07-tag=%23date%2Byear&tagger-08-header=surveyid&tagger-08-tag=%23survey%2Bid&tagger-09-header=indicatorid&tagger-09-tag=%23indicator%2Bcode&filter01=add&add-tag01=%23country%2Bcode&add-value01=AFG&add-header01=ISO3&add-before01=on', 'resource_type': 'api', 'url_type': 'api'},
-                 {'name': 'Subnational DHS Mobile', 'description': 'Subnational Data: DHS Mobile', 'format': 'csv', 'url': 'https://proxy.hxlstandard.org/data/download/Subnational DHS Mobile.csv?url=http%3A%2F%2Fhaha%2Fdata%2FAF%3Ftagids%3D77%26breakdown%3Dsubnational%26perpage%3D10000%26f%3Dcsv&name=DHSHXL&header-row=1&tagger-match-all=on&tagger-01-header=dataid&tagger-01-tag=%23meta%2Bid&tagger-02-header=indicator&tagger-02-tag=%23indicator%2Bname&tagger-03-header=value&tagger-03-tag=%23indicator%2Bvalue%2Bnum&tagger-04-header=precision&tagger-04-tag=%23indicator%2Bprecision&tagger-06-header=countryname&tagger-06-tag=%23country%2Bname&tagger-07-header=surveyyear&tagger-07-tag=%23date%2Byear&tagger-08-header=surveyid&tagger-08-tag=%23survey%2Bid&tagger-09-header=indicatorid&tagger-09-tag=%23indicator%2Bcode&tagger-10-header=CharacteristicLabel&tagger-10-tag=%23meta%2Bcharacteristic&filter01=add&add-tag01=%23loc%2Bname&add-value01=%7B%7B%23meta%2Bcharacteristic%7D%7D&add-header01=Location&add-before01=on&filter02=add&add-tag02=%23country%2Bcode&add-value02=AFG&add-header02=ISO3&add-before02=on&filter03=replace&replace-pattern03=%5C.%5C.%28.%2A%29&replace-regex03=on&replace-value03=%5C1&replace-tags03=%23loc%2Bname&replace-where03=%23loc%2Bname~%5C.%5C..%2A', 'resource_type': 'api', 'url_type': 'api'}]
+    resources = [{'name': 'DHS Quickstats Data for Afghanistan', 'description': 'HXLated csv containing DHS Quickstats data', 'format': 'csv', 'resource_type': 'file.upload', 'url_type': 'upload'},
+                 {'name': 'DHS Mobile Data for Afghanistan', 'description': 'HXLated csv containing DHS Mobile data', 'format': 'csv', 'resource_type': 'file.upload', 'url_type': 'upload'}]
+    subdataset = {'name': 'dhs-subnational-data-for-afghanistan', 'title': 'Afghanistan - Subnational Demographic and Health Data',
+               'notes': 'Contains data from the [DHS data portal](https://api.dhsprogram.com/). There is also a dataset containing [Afghanistan - National Demographic and Health Data](https://feature-data.humdata.org/dataset/dhs-data-for-afghanistan) on HDX.\n\nThe DHS Program Application Programming Interface (API) provides software developers access to aggregated indicator data from The Demographic and Health Surveys (DHS) Program. The API can be used to create various applications to help analyze, visualize, explore and disseminate data on population, health, HIV, and nutrition from more than 90 countries.',
+               'maintainer': '196196be-6037-4488-8b71-d786adf4c081', 'owner_org': '45e7c1a1-196f-40a5-a715-9d6e934a7f70',
+               'data_update_frequency': '365', 'subnational': '1', 'groups': [{'name': 'afg'}],
+               'tags': [{'name': 'hxl', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'},
+                        {'name': 'health', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'},
+                        {'name': 'demographics', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}],
+               'dataset_date': '01/01/2015-12/31/2015'}
+    subresources = [{'name': 'DHS Quickstats Data for Afghanistan', 'description': 'HXLated csv containing DHS Quickstats data', 'format': 'csv', 'resource_type': 'file.upload', 'url_type': 'upload'}]
 
     @pytest.fixture(scope='function')
     def configuration(self):
@@ -47,6 +60,7 @@ class TestDHS():
         Country.countriesdata(use_live=False)
         Vocabulary._tags_dict = True
         Vocabulary._approved_vocabulary = {'tags': [{'name': 'hxl'}, {'name': 'health'}, {'name': 'demographics'}], 'id': '4e61d464-4943-4e97-973a-84673c1aaa87', 'name': 'approved'}
+        return Configuration.read()
 
     @pytest.fixture(scope='function')
     def downloader(self):
@@ -77,11 +91,25 @@ class TestDHS():
                     response.json = fn
                 return response
 
+            @staticmethod
+            def get_tabular_rows(url, format):
+                if url == 'http://haha/data/AF?tagids=0&breakdown=national&perpage=10000&f=csv':
+                    file = 'afg0national.csv'
+                elif url == 'http://haha/data/AF?tagids=0&breakdown=subnational&perpage=10000&f=csv':
+                    file = 'afg0subnational.csv'
+                elif url == 'http://haha/data/AF?tagids=77&breakdown=national&perpage=10000&f=csv':
+                    file = 'afg77national.csv'
+                elif url == 'http://haha/data/AF?tagids=77&breakdown=subnational&perpage=10000&f=csv':
+                    ex = DownloadError()
+                    ex.__cause__ = ValueError('Variable RET is undefined')
+                    raise ex
+                return (x for x in read_list_from_csv(join('tests', 'fixtures', file)))
+
         return Download()
 
     def test_get_countriesdata(self, downloader):
-        countriesdata = get_countriesdata('http://haha/', downloader)
-        assert countriesdata == [('AFG', 'AF')]
+        countriesdata = get_countries('http://haha/', downloader)
+        assert countriesdata == [TestDHS.country]
 
     def test_get_tags(self, downloader):
         tags = get_tags('http://haha/', downloader, 'AF')
@@ -95,14 +123,22 @@ class TestDHS():
         publication = get_publication('http://haha/', downloader, 'AF')
         assert publication == TestDHS.publications[-1]
 
-    def test_generate_dataset_and_showcase(self, configuration, downloader):
-        hxlproxy_url = Configuration.read()['hxlproxy_url']
-        dataset, showcase = generate_dataset_and_showcase('http://haha/', hxlproxy_url, downloader, ('AFG', 'AF'), TestDHS.tags)
-        assert dataset == TestDHS.dataset
+    def test_generate_datasets_and_showcase(self, configuration, downloader):
+        with temp_dir('DHS') as folder:
+            dataset, subdataset, showcase = generate_datasets_and_showcase(configuration, 'http://haha/', downloader, folder, TestDHS.country, TestDHS.tags)
+            assert dataset == TestDHS.dataset
+            resources = dataset.get_resources()
+            assert resources == TestDHS.resources
+            assert subdataset == TestDHS.subdataset
+            assert subdataset.get_resources() == TestDHS.subresources
 
-        resources = dataset.get_resources()
-        assert resources == TestDHS.resources
+            assert showcase == {'name': 'dhs-data-for-afghanistan-showcase', 'title': 'Final Report', 'notes': 'Afghanistan Demographic and Health Survey 2015',
+                                'url': 'https://www.dhsprogram.com/pubs/pdf/FR323/FR323.pdf', 'image_url': 'https://www.dhsprogram.com/publications/images/thumbnails/FR323.jpg',
+                                'tags': [{'name': 'hxl', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}, {'name': 'health', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}, {'name': 'demographics', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}]}
 
-        assert showcase == {'name': 'dhs-data-for-afghanistan-showcase', 'title': 'Final Report', 'notes': 'Afghanistan Demographic and Health Survey 2015',
-                            'url': 'https://www.dhsprogram.com/pubs/pdf/FR323/FR323.pdf', 'image_url': 'https://www.dhsprogram.com/publications/images/thumbnails/FR323.jpg',
-                            'tags': [{'name': 'hxl', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}, {'name': 'health', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}, {'name': 'demographics', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}]}
+            file = 'DHS Quickstats_national_AFG.csv'
+            assert_files_same(join('tests', 'fixtures', file), join(folder, file))
+            file = 'DHS Mobile_national_AFG.csv'
+            assert_files_same(join('tests', 'fixtures', file), join(folder, file))
+            file = 'DHS Quickstats_subnational_AFG.csv'
+            assert_files_same(join('tests', 'fixtures', file), join(folder, file))

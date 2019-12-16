@@ -138,7 +138,6 @@
                    c. No term or condition of this Public License will be waived and no failure to comply consented to unless expressly agreed to by the Licensor.
 
                    d. Nothing in this Public License constitutes or may be interpreted as a limitation upon, or waiver of, any privileges and immunities that apply to the Licensor or You, including from the legal processes of any jurisdiction or authority."
-notes: "The DHS Program Application Programming Interface (API) provides software developers access to aggregated indicator data from The Demographic and Health Surveys (DHS) Program. The API can be used to create various applications to help analyze, visualize, explore and disseminate data on population, health, HIV, and nutrition from more than 90 countries."
 caveats: ""
 methodology: "Sample Survey"
 dataset_source: "The DHS Program"
