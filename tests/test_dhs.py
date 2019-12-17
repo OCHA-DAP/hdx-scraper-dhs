@@ -54,7 +54,7 @@ class TestDHS():
 
     @pytest.fixture(scope='function')
     def configuration(self):
-        Configuration._create(user_agent='test', hdx_key='12345',
+        Configuration._create(hdx_site='feature', user_agent='test', hdx_key='12345',
                               project_config_yaml=join('tests', 'config', 'project_configuration.yml'))
         Locations.set_validlocations([{'name': 'afg', 'title': 'Afghanistan'}, {'name': 'cmr', 'title': 'Cameroon'}])
         Country.countriesdata(use_live=False)
