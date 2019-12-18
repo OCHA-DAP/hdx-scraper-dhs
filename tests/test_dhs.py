@@ -4,9 +4,11 @@
 Unit tests for DHS
 
 """
+import copy
 from os.path import join
 
 import pytest
+from hdx.data.dataset import Dataset
 from hdx.data.vocabulary import Vocabulary
 from hdx.hdx_configuration import Configuration
 from hdx.hdx_locations import Locations
@@ -16,7 +18,8 @@ from hdx.utilities.dictandlist import read_list_from_csv
 from hdx.utilities.downloader import DownloadError
 from hdx.utilities.path import temp_dir
 
-from dhs import generate_datasets_and_showcase, get_countries, get_tags, get_datecoverage, get_publication
+from dhs import generate_datasets_and_showcase, get_countries, get_tags, get_datecoverage, get_publication, \
+    generate_resource_view
 
 
 class TestDHS():
@@ -125,7 +128,8 @@ class TestDHS():
 
     def test_generate_datasets_and_showcase(self, configuration, downloader):
         with temp_dir('DHS') as folder:
-            dataset, subdataset, showcase = generate_datasets_and_showcase(configuration, 'http://haha/', downloader, folder, TestDHS.country, TestDHS.tags)
+            dataset, subdataset, showcase, bites_disabled = \
+                generate_datasets_and_showcase(configuration, 'http://haha/', downloader, folder, TestDHS.country, TestDHS.tags)
             assert dataset == TestDHS.dataset
             resources = dataset.get_resources()
             assert resources == TestDHS.resources
@@ -135,10 +139,22 @@ class TestDHS():
             assert showcase == {'name': 'dhs-data-for-afghanistan-showcase', 'title': 'Final Report', 'notes': 'Afghanistan Demographic and Health Survey 2015',
                                 'url': 'https://www.dhsprogram.com/pubs/pdf/FR323/FR323.pdf', 'image_url': 'https://www.dhsprogram.com/publications/images/thumbnails/FR323.jpg',
                                 'tags': [{'name': 'hxl', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}, {'name': 'health', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}, {'name': 'demographics', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}]}
-
+            assert bites_disabled == {'national': [False, False, False], 'subnational': [False, False, False]}
             file = 'DHS Quickstats_national_AFG.csv'
             assert_files_same(join('tests', 'fixtures', file), join(folder, file))
             file = 'DHS Mobile_national_AFG.csv'
             assert_files_same(join('tests', 'fixtures', file), join(folder, file))
             file = 'DHS Quickstats_subnational_AFG.csv'
             assert_files_same(join('tests', 'fixtures', file), join(folder, file))
+
+    def test_generate_resource_view(self):
+        dataset = Dataset(TestDHS.dataset)
+        resource = copy.deepcopy(TestDHS.resources[0])
+        resource['id'] = '123'
+        resource['url'] = 'https://test-data.humdata.org/dataset/495bf9ef-afab-41ac-a804-ca5978aa4213/resource/703d04ef-1787-44b1-92d5-c4ddd283d33f/download/dhs-quickstats_national_afg.csv'
+        dataset.add_update_resource(resource)
+        resource_view = generate_resource_view(dataset, bites_disabled=[True, True, True])
+        assert resource_view is None
+        resource_view = generate_resource_view(dataset, bites_disabled=[False, True, False])
+        assert resource_view == {'resource_id': '123', 'description': '', 'title': 'Quick Charts', 'view_type': 'hdx_hxl_preview',
+                                 'hxl_preview_config': '{"configVersion": 5, "bites": [{"tempShowSaveCancelButtons": false, "ingredient": {"valueColumn": "#indicator+value+num", "aggregateFunction": "sum", "dateColumn": null, "comparisonValueColumn": null, "comparisonOperator": null, "filters": {"filterWith": [{"#date+year": "$MAX$"}, {"#indicator+code": "CM_ECMR_C_IMR"}]}, "title": "Infant Mortality Rate", "description": "Rate is for the period of 10 years preceding the survey"}, "type": "key figure", "errorMsg": null, "computedProperties": {"explainedFiltersMap": {}, "pieChart": false, "dataTitle": "Value"}, "uiProperties": {"swapAxis": true, "showGrid": true, "color": "#1ebfb3", "sortingByValue1": "DESC", "sortingByCategory1": null, "internalColorPattern": ["#1ebfb3", "#0077ce", "#f2645a", "#9C27B0"], "dataTitle": "Percent", "postText": "percent"}, "dataProperties": {}, "displayCategory": "Charts", "hashCode": -487125335}, {"tempShowSaveCancelButtons": false, "ingredient": {"valueColumn": "#indicator+value+num", "aggregateFunction": "sum", "dateColumn": null, "comparisonValueColumn": null, "comparisonOperator": null, "filters": {"filterWith": [{"#date+year": "$MAX$"}, {"#indicator+code": "ED_LITR_W_LIT"}]}, "title": "Women who are Literate", "description": ""}, "type": "key figure", "errorMsg": null, "computedProperties": {"explainedFiltersMap": {}, "pieChart": false, "dataTitle": "Value"}, "uiProperties": {"swapAxis": true, "showGrid": true, "color": "#1ebfb3", "sortingByValue1": "ASC", "sortingByCategory1": null, "internalColorPattern": ["#1ebfb3", "#0077ce", "#f2645a", "#9C27B0"], "dataTitle": "Percent", "postText": "percent"}, "dataProperties": {}, "displayCategory": "Charts", "hashCode": -539301812}], "recipeUrl": "https://raw.githubusercontent.com/mcarans/hxl-recipes/dev/recipes/dhs/recipe.json"}'}

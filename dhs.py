@@ -112,7 +112,7 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
 
     dataset = get_dataset()
     if dataset is None:
-        return None, None, None
+        return None, None, None, None
     dataset['title'] = title.replace('Demographic', 'National Demographic')
     slugified_name = slugify('DHS Data for %s' % countryname).lower()
     dataset['name'] = slugified_name
@@ -120,7 +120,7 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
 
     subdataset = get_dataset()
     if dataset is None:
-        return None, None, None
+        return None, None, None, None
     subdataset['title'] = title.replace('Demographic', 'Subnational Demographic')
     subslugified_name = slugify('DHS Subnational Data for %s' % countryname).lower()
     subdataset['name'] = subslugified_name
@@ -129,6 +129,7 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
     dataset['notes'] = description % (subdataset['title'], configuration.get_dataset_url(subslugified_name))
     subdataset['notes'] = description % (dataset['title'], configuration.get_dataset_url(slugified_name))
 
+    bites_disabled = {'national': [True, True, True], 'subnational': [True, True, True]}
     # apikey= downloader.session.params['apiKey']
     for dhstag in dhstags:
         # dhs_country_url = '%sdata/%s?tagids=%s&breakdown=national&perpage=10000&apiKey=%s&f=csv' % (base_url, dhscountrycode, dhstag['TagID'], apikey)
@@ -144,9 +145,24 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
         headers = next(generator)
         headers.insert(0, 'ISO3')
         rows = [headers, [hxltags.get(header, '') for header in headers]]
-        for row in generator:
-            row.insert(0, countryiso)
-            rows.append(row)
+        if tagname == 'DHS Quickstats':
+            for i, header in enumerate(headers):
+                if header == 'IndicatorId':
+                    break
+            for row in generator:
+                row.insert(0, countryiso)
+                indicatorid = row[i]
+                if indicatorid == 'CM_ECMR_C_IMR':
+                    bites_disabled['national'][0] = False
+                elif indicatorid == 'HC_ELEC_H_ELC':
+                    bites_disabled['national'][1] = False
+                elif indicatorid == 'ED_LITR_W_LIT':
+                    bites_disabled['national'][2] = False
+                rows.append(row)
+        else:
+            for row in generator:
+                row.insert(0, countryiso)
+                rows.append(row)
         filepath = join(folder, '%s_national_%s.csv' % (tagname, countryiso))
         write_list_to_csv(rows, filepath)
         resource = Resource(resourcedata)
@@ -169,12 +185,30 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
             headers.insert(0, 'Location')
             headers.insert(0, 'ISO3')
             rows = [headers, [hxltags.get(header, '') for header in headers]]
-            for row in generator:
-                val = row[characteristiclabel]
-                del row[characteristiclabel]
-                row.insert(0, val)
-                row.insert(0, countryiso)
-                rows.append(row)
+            if tagname == 'DHS Quickstats':
+                for i, header in enumerate(headers):
+                    if header == 'IndicatorId':
+                        break
+                for row in generator:
+                    val = row[characteristiclabel]
+                    del row[characteristiclabel]
+                    row.insert(0, val)
+                    row.insert(0, countryiso)
+                    indicatorid = row[i]
+                    if indicatorid == 'CM_ECMR_C_IMR':
+                        bites_disabled['subnational'][0] = False
+                    elif indicatorid == 'HC_ELEC_H_ELC':
+                        bites_disabled['subnational'][1] = False
+                    elif indicatorid == 'ED_LITR_W_LIT':
+                        bites_disabled['subnational'][2] = False
+                    rows.append(row)
+            else:
+                for row in generator:
+                    val = row[characteristiclabel]
+                    del row[characteristiclabel]
+                    row.insert(0, val)
+                    row.insert(0, countryiso)
+                    rows.append(row)
             filepath = join(folder, '%s_subnational_%s.csv' % (tagname, countryiso))
             write_list_to_csv(rows, filepath)
             resource = Resource(resourcedata)
@@ -200,14 +234,21 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
         'image_url': publication['ThumbnailURL']
     })
     showcase.add_tags(tags)
-    return dataset, subdataset, showcase
+    return dataset, subdataset, showcase, bites_disabled
 
 
-def generate_resource_view(dataset, quickchart_resourceno=0):
+def generate_resource_view(dataset, quickchart_resourceno=0, bites_disabled=None):
+    if bites_disabled == [True, True, True]:
+        return None
     resourceview = ResourceView({'resource_id': dataset.get_resource(quickchart_resourceno)['id']})
     resourceview.update_from_yaml()
     hxl_preview_config = json.loads(resourceview['hxl_preview_config'])
-    for bite in hxl_preview_config['bites']:
+    bites = hxl_preview_config['bites']
+    if bites_disabled is not None:
+        for i, disable in reversed(list(enumerate(bites_disabled))):
+            if disable:
+                del bites[i]
+    for bite in bites:
         bite['type'] = 'key figure'
         bite['uiProperties']['postText'] = 'percent'
         del bite['ingredient']['aggregateColumn']

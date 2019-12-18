@@ -36,18 +36,18 @@ def main():
         logger.info('Number of countries: %d' % len(countries))
         for folder, country in progress_storing_tempdir('DHS', countries, 'iso3'):
             tags = get_tags(base_url, downloader, country['dhscode'])
-            dataset, subdataset, showcase = generate_datasets_and_showcase(configuration, base_url, downloader, folder,
-                                                                           country, tags)
+            dataset, subdataset, showcase, bites_disabled = \
+                generate_datasets_and_showcase(configuration, base_url, downloader, folder, country, tags)
             if dataset:
                 createdataset(dataset)
-                resource_view = generate_resource_view(dataset)
+                resource_view = generate_resource_view(dataset, bites_disabled=bites_disabled['national'])
                 resource_view.create_in_hdx()
                 showcase.create_in_hdx()
                 showcase.add_dataset(dataset)
             if subdataset:
                 createdataset(subdataset)
                 showcase.add_dataset(subdataset)
-                subdataset.generate_resource_view()
+                subdataset.generate_resource_view(bites_disabled=bites_disabled['subnational'])
 
 
 if __name__ == '__main__':
