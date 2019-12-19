@@ -205,7 +205,8 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
             else:
                 for row in generator:
                     val = row[characteristiclabel]
-                    del row[characteristiclabel]
+                    if val[:2] == '..':
+                        val = val[2:]
                     row.insert(0, val)
                     row.insert(0, countryiso)
                     rows.append(row)
