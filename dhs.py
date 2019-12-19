@@ -130,6 +130,15 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
     subdataset['notes'] = description % (dataset['title'], configuration.get_dataset_url(slugified_name))
 
     bites_disabled = {'national': [True, True, True], 'subnational': [True, True, True]}
+
+    def process_subnational_row(row, characteristiclabel, countryiso, rows):
+        val = row[characteristiclabel]
+        if val[:2] == '..':
+            val = val[2:]
+        row.insert(0, val)
+        row.insert(0, countryiso)
+        rows.append(row)
+
     # apikey= downloader.session.params['apiKey']
     for dhstag in dhstags:
         # dhs_country_url = '%sdata/%s?tagids=%s&breakdown=national&perpage=10000&apiKey=%s&f=csv' % (base_url, dhscountrycode, dhstag['TagID'], apikey)
@@ -189,11 +198,7 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
                     if header == 'IndicatorId':
                         break
                 for row in generator:
-                    val = row[characteristiclabel]
-                    if val[:2] == '..':
-                        val = val[2:]
-                    row.insert(0, val)
-                    row.insert(0, countryiso)
+                    process_subnational_row(row, characteristiclabel, countryiso, rows)
                     indicatorid = row[i]
                     if indicatorid == 'CM_ECMR_C_IMR':
                         bites_disabled['subnational'][0] = False
@@ -201,15 +206,9 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
                         bites_disabled['subnational'][1] = False
                     elif indicatorid == 'ED_LITR_W_LIT':
                         bites_disabled['subnational'][2] = False
-                    rows.append(row)
             else:
                 for row in generator:
-                    val = row[characteristiclabel]
-                    if val[:2] == '..':
-                        val = val[2:]
-                    row.insert(0, val)
-                    row.insert(0, countryiso)
-                    rows.append(row)
+                    process_subnational_row(row, characteristiclabel, countryiso, rows)
             filepath = join(folder, '%s_subnational_%s.csv' % (tagname, countryiso))
             write_list_to_csv(rows, filepath)
             resource = Resource(resourcedata)
