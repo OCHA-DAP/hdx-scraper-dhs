@@ -181,7 +181,6 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
                     break
             if characteristiclabel is None:
                 raise ValueError('CharacteristicLabel not found!')
-            del headers[characteristiclabel]
             headers.insert(0, 'Location')
             headers.insert(0, 'ISO3')
             rows = [headers, [hxltags.get(header, '') for header in headers]]
@@ -191,7 +190,8 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
                         break
                 for row in generator:
                     val = row[characteristiclabel]
-                    del row[characteristiclabel]
+                    if val[:2] == '..':
+                        val = val[2:]
                     row.insert(0, val)
                     row.insert(0, countryiso)
                     indicatorid = row[i]
