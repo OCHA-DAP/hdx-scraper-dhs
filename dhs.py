@@ -16,7 +16,7 @@ from hdx.data.resource import Resource
 from hdx.data.resource_view import ResourceView
 from hdx.data.showcase import Showcase
 from hdx.location.country import Country
-from hdx.utilities.dictandlist import write_list_to_csv
+from hdx.utilities.dictandlist import write_list_to_csv, dict_of_sets_add
 from hdx.utilities.downloader import DownloadError
 from slugify import slugify
 
@@ -47,19 +47,6 @@ def get_tags(base_url, downloader, dhscountrycode):
     return json['Data']
 
 
-def get_datecoverage(base_url, downloader, dhscountrycode):
-    url = '%ssurveys/%s' % (base_url, dhscountrycode)
-    response = downloader.download(url)
-    json = response.json()
-    years = set()
-    for survey in json['Data']:
-        years.add(survey['SurveyYear'])
-    if len(years) == 0:
-        return None, None
-    years = sorted(list(years))
-    return years[0], years[-1]
-
-
 def get_publication(base_url, downloader, dhscountrycode):
     url = '%spublications/%s' % (base_url, dhscountrycode)
     response = downloader.download(url)
@@ -86,6 +73,51 @@ def get_publication(base_url, downloader, dhscountrycode):
     return publication
 
 
+def get_dataset(countryiso, tags):
+    dataset = Dataset()
+    dataset.set_maintainer('196196be-6037-4488-8b71-d786adf4c081')
+    dataset.set_organization('45e7c1a1-196f-40a5-a715-9d6e934a7f70')
+    dataset.set_expected_update_frequency('Every year')
+    dataset.add_country_location(countryiso)
+    dataset.add_tags(tags)
+    return dataset
+
+
+def get_column_positions(headers):
+    columnpositions = dict()
+    for i, header in enumerate(headers):
+        columnpositions[header] = i
+    return columnpositions
+
+
+def process_national_row(columnpositions, years, rows, row, countryiso):
+    years.add(int(row[columnpositions['SurveyYear']]))
+    row.insert(0, countryiso)
+    rows.append(row)
+
+
+def process_subnational_row(columnpositions, subyears, rows, row, countryiso):
+    subyears.add(int(row[columnpositions['SurveyYear']]))
+    val = row[columnpositions['CharacteristicLabel']]
+    if val[:2] == '..':
+        val = val[2:]
+    row.insert(0, val)
+    row.insert(0, countryiso)
+    rows.append(row)
+
+
+def set_dataset_date_bites(dataset, years, bites_disabled, national_subnational):
+    years = sorted(list(years))
+    latest_year = years[-1]
+    dataset.set_dataset_year_range(years[0], latest_year)
+    new_bites_disabled = [True, True, True]
+    for i, indicator in enumerate(['CM_ECMR_C_IMR', 'HC_ELEC_H_ELC', 'ED_LITR_W_LIT']):
+        indicator_latest_year = sorted(list(bites_disabled[national_subnational][indicator]))[-1]
+        if indicator_latest_year == latest_year:
+            new_bites_disabled[i] = False
+    bites_disabled[national_subnational] = new_bites_disabled
+
+
 def generate_datasets_and_showcase(configuration, base_url, downloader, folder, country, dhstags):
     """
     """
@@ -96,21 +128,7 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
     logger.info('Creating datasets for %s' % title)
     tags = ['hxl', 'health', 'demographics']
 
-    def get_dataset():
-        basedataset = Dataset()
-        basedataset.set_maintainer('196196be-6037-4488-8b71-d786adf4c081')
-        basedataset.set_organization('45e7c1a1-196f-40a5-a715-9d6e934a7f70')
-        basedataset.set_expected_update_frequency('Every year')
-        basedataset.add_country_location(countryiso)
-        basedataset.add_tags(tags)
-        earliest_year, latest_year = get_datecoverage(base_url, downloader, dhscountrycode)
-        if earliest_year is None:
-            logger.warning('No surveys exists for %s!' % countryname)
-            return None
-        basedataset.set_dataset_year_range(earliest_year, latest_year)
-        return basedataset
-
-    dataset = get_dataset()
+    dataset = get_dataset(countryiso, tags)
     if dataset is None:
         return None, None, None, None
     dataset['title'] = title.replace('Demographic', 'National Demographic')
@@ -118,9 +136,10 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
     dataset['name'] = slugified_name
     dataset.set_subnational(False)
 
-    subdataset = get_dataset()
+    subdataset = get_dataset(countryiso, tags)
     if dataset is None:
         return None, None, None, None
+
     subdataset['title'] = title.replace('Demographic', 'Subnational Demographic')
     subslugified_name = slugify('DHS Subnational Data for %s' % countryname).lower()
     subdataset['name'] = subslugified_name
@@ -129,19 +148,11 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
     dataset['notes'] = description % (subdataset['title'], configuration.get_dataset_url(subslugified_name))
     subdataset['notes'] = description % (dataset['title'], configuration.get_dataset_url(slugified_name))
 
-    bites_disabled = {'national': [True, True, True], 'subnational': [True, True, True]}
+    bites_disabled = {'national': dict(), 'subnational': dict()}
 
-    def process_subnational_row(row, characteristiclabel, countryiso, rows):
-        val = row[characteristiclabel]
-        if val[:2] == '..':
-            val = val[2:]
-        row.insert(0, val)
-        row.insert(0, countryiso)
-        rows.append(row)
-
-    # apikey= downloader.session.params['apiKey']
+    years = set()
+    subyears = set()
     for dhstag in dhstags:
-        # dhs_country_url = '%sdata/%s?tagids=%s&breakdown=national&perpage=10000&apiKey=%s&f=csv' % (base_url, dhscountrycode, dhstag['TagID'], apikey)
         tagname = dhstag['TagName'].strip()
         resource_name = '%s Data for %s' % (tagname, countryname)
         resourcedata = {
@@ -152,26 +163,18 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
         url = '%sdata/%s?tagids=%s&breakdown=national&perpage=10000&f=csv' % (base_url, dhscountrycode, dhstag['TagID'])
         generator = downloader.get_tabular_rows(url, format='csv')
         headers = next(generator)
+        columnpositions = get_column_positions(headers)
         headers.insert(0, 'ISO3')
         rows = [headers, [hxltags.get(header, '') for header in headers]]
         if tagname == 'DHS Quickstats':
-            for i, header in enumerate(headers):
-                if header == 'IndicatorId':
-                    break
             for row in generator:
-                row.insert(0, countryiso)
-                indicatorid = row[i]
-                if indicatorid == 'CM_ECMR_C_IMR':
-                    bites_disabled['national'][0] = False
-                elif indicatorid == 'HC_ELEC_H_ELC':
-                    bites_disabled['national'][1] = False
-                elif indicatorid == 'ED_LITR_W_LIT':
-                    bites_disabled['national'][2] = False
-                rows.append(row)
+                indicatorid = row[columnpositions['IndicatorId']]
+                if indicatorid in ['CM_ECMR_C_IMR', 'HC_ELEC_H_ELC', 'ED_LITR_W_LIT']:
+                    dict_of_sets_add(bites_disabled['national'], indicatorid, int(row[columnpositions['SurveyYear']]))
+                process_national_row(columnpositions, years, rows, row, countryiso)
         else:
             for row in generator:
-                row.insert(0, countryiso)
-                rows.append(row)
+                process_national_row(columnpositions, years, rows, row, countryiso)
         filepath = join(folder, '%s_national_%s.csv' % (tagname, countryiso))
         write_list_to_csv(rows, filepath)
         resource = Resource(resourcedata)
@@ -183,32 +186,21 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
         try:
             generator = downloader.get_tabular_rows(url, format='csv')
             headers = next(generator)
-            characteristiclabel = None
-            for i, header in enumerate(headers):
-                if header == 'CharacteristicLabel':
-                    characteristiclabel = i
-                    break
-            if characteristiclabel is None:
-                raise ValueError('CharacteristicLabel not found!')
+            columnpositions = get_column_positions(headers)
+
             headers.insert(0, 'Location')
             headers.insert(0, 'ISO3')
             rows = [headers, [hxltags.get(header, '') for header in headers]]
             if tagname == 'DHS Quickstats':
-                for i, header in enumerate(headers):
-                    if header == 'IndicatorId':
-                        break
                 for row in generator:
-                    process_subnational_row(row, characteristiclabel, countryiso, rows)
-                    indicatorid = row[i]
-                    if indicatorid == 'CM_ECMR_C_IMR':
-                        bites_disabled['subnational'][0] = False
-                    elif indicatorid == 'HC_ELEC_H_ELC':
-                        bites_disabled['subnational'][1] = False
-                    elif indicatorid == 'ED_LITR_W_LIT':
-                        bites_disabled['subnational'][2] = False
+                    indicatorid = row[columnpositions['IndicatorId']]
+                    if indicatorid in ['CM_ECMR_C_IMR', 'HC_ELEC_H_ELC', 'ED_LITR_W_LIT']:
+                        dict_of_sets_add(bites_disabled['subnational'], indicatorid,
+                                         int(row[columnpositions['SurveyYear']]))
+                    process_subnational_row(columnpositions, subyears, rows, row, countryiso)
             else:
                 for row in generator:
-                    process_subnational_row(row, characteristiclabel, countryiso, rows)
+                    process_subnational_row(columnpositions, subyears, rows, row, countryiso)
             filepath = join(folder, '%s_subnational_%s.csv' % (tagname, countryiso))
             write_list_to_csv(rows, filepath)
             resource = Resource(resourcedata)
@@ -218,12 +210,18 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
         except DownloadError as ex:
             cause = ex.__cause__
             if cause is not None:
-                if 'Variable RET is undefined' not in str(cause):
+                if 'too many 500 error responses' not in str(cause):
                     raise ex
             else:
                 raise ex
+    if len(dataset.get_resources()) == 0:
+        dataset = None
+    else:
+        set_dataset_date_bites(dataset, years, bites_disabled, 'national')
     if len(subdataset.get_resources()) == 0:
         subdataset = None
+    else:
+        set_dataset_date_bites(subdataset, subyears, bites_disabled, 'subnational')
 
     publication = get_publication(base_url, downloader, dhscountrycode)
     showcase = Showcase({

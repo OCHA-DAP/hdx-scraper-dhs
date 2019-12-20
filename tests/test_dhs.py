@@ -18,15 +18,13 @@ from hdx.utilities.dictandlist import read_list_from_csv
 from hdx.utilities.downloader import DownloadError
 from hdx.utilities.path import temp_dir
 
-from dhs import generate_datasets_and_showcase, get_countries, get_tags, get_datecoverage, get_publication, \
-    generate_resource_view
+from dhs import generate_datasets_and_showcase, get_countries, get_tags, get_publication, generate_resource_view
 
 
 class TestDHS():
     countrydata = {'UNAIDS_CountryCode': 'AFG', 'SubregionName': 'South Asia', 'WHO_CountryCode': 'AF', 'FIPS_CountryCode': 'AF', 'ISO2_CountryCode': 'AF', 'ISO3_CountryCode': 'AFG', 'RegionOrder': 41, 'DHS_CountryCode': 'AF', 'CountryName': 'Afghanistan', 'UNICEF_CountryCode': 'AFG', 'UNSTAT_CountryCode': 'AFG', 'RegionName': 'South & Southeast Asia'}
     country = {'iso3': 'AFG', 'dhscode': 'AF'}
     tags = [{'TagType': 2, 'TagName': 'DHS Quickstats', 'TagID': 0, 'TagOrder': 0}, {'TagType': 2, 'TagName': 'DHS Mobile', 'TagID': 77, 'TagOrder': 1}]
-    datecoverage = '2015'
     publications = [{'PublicationURL': 'https://www.dhsprogram.com/pubs/pdf/SR186/SR186.pdf', 'PublicationTitle': 'Mortality Survey Key Findings 2009', 'SurveyId': 'AF2009OTH', 'SurveyType': 'OTH', 'ThumbnailURL': 'https://www.dhsprogram.com/publications/images/thumbnails/SR186.jpg', 'SurveyYear': 2009, 'PublicationSize': 2189233, 'DHS_CountryCode': 'AF', 'PublicationId': 11072, 'PublicationDescription': 'Afghanistan AMS 2009 Summary Report'},
                     {'PublicationURL': 'https://www.dhsprogram.com/pubs/pdf/SR186/SR186.pdf', 'PublicationTitle': 'Mortality Survey Key Findings', 'SurveyId': 'AF2010OTH', 'SurveyType': 'OTH', 'ThumbnailURL': 'https://www.dhsprogram.com/publications/images/thumbnails/SR186.jpg', 'SurveyYear': 2010, 'PublicationSize': 2189233, 'DHS_CountryCode': 'AF', 'PublicationId': 1107, 'PublicationDescription': 'Afghanistan AMS 2010 Summary Report'},
                     {'PublicationURL': 'https://www.dhsprogram.com/pubs/pdf/FR248/FR248.pdf', 'PublicationTitle': 'Mortality Survey Final Report', 'SurveyId': 'AF2010OTH', 'SurveyType': 'OTH', 'ThumbnailURL': 'https://www.dhsprogram.com/publications/images/thumbnails/FR248.jpg', 'SurveyYear': 2010, 'PublicationSize': 3457803, 'DHS_CountryCode': 'AF', 'PublicationId': 1106, 'PublicationDescription': 'Afghanistan Mortality Survey 2010'},
@@ -84,10 +82,6 @@ class TestDHS():
                     def fn():
                         return {'Data': TestDHS.tags}
                     response.json = fn
-                elif url == 'http://haha/surveys/AF':
-                    def fn():
-                        return {'Data': [{'SurveyYear': TestDHS.datecoverage}]}
-                    response.json = fn
                 elif url == 'http://haha/publications/AF':
                     def fn():
                         return {'Data': TestDHS.publications}
@@ -96,6 +90,7 @@ class TestDHS():
 
             @staticmethod
             def get_tabular_rows(url, format):
+                file = None
                 if url == 'http://haha/data/AF?tagids=0&breakdown=national&perpage=10000&f=csv':
                     file = 'afg0national.csv'
                 elif url == 'http://haha/data/AF?tagids=0&breakdown=subnational&perpage=10000&f=csv':
@@ -104,8 +99,10 @@ class TestDHS():
                     file = 'afg77national.csv'
                 elif url == 'http://haha/data/AF?tagids=77&breakdown=subnational&perpage=10000&f=csv':
                     ex = DownloadError()
-                    ex.__cause__ = ValueError('Variable RET is undefined')
+                    ex.__cause__ = ValueError('too many 500 error responses')
                     raise ex
+                if file is None:
+                    raise ValueError('No file - url %s was not recognised!' % url)
                 return (x for x in read_list_from_csv(join('tests', 'fixtures', file)))
 
         return Download()
@@ -117,10 +114,6 @@ class TestDHS():
     def test_get_tags(self, downloader):
         tags = get_tags('http://haha/', downloader, 'AF')
         assert tags == TestDHS.tags
-
-    def test_get_datecoverage(self, downloader):
-        datecoverage = get_datecoverage('http://haha/', downloader, 'AF')
-        assert datecoverage == (TestDHS.datecoverage, TestDHS.datecoverage)
 
     def test_get_publication(self, downloader):
         publication = get_publication('http://haha/', downloader, 'AF')
