@@ -210,7 +210,7 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
         except DownloadError as ex:
             cause = ex.__cause__
             if cause is not None:
-                if 'too many 500 error responses' not in str(cause):
+                if 'Variable RET is undefined' not in str(cause):
                     raise ex
             else:
                 raise ex

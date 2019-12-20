@@ -99,7 +99,7 @@ class TestDHS():
                     file = 'afg77national.csv'
                 elif url == 'http://haha/data/AF?tagids=77&breakdown=subnational&perpage=10000&f=csv':
                     ex = DownloadError()
-                    ex.__cause__ = ValueError('too many 500 error responses')
+                    ex.__cause__ = ValueError('Variable RET is undefined')
                     raise ex
                 if file is None:
                     raise ValueError('No file - url %s was not recognised!' % url)

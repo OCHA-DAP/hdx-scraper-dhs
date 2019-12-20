@@ -10,6 +10,8 @@ from os.path import join, expanduser
 from hdx.hdx_configuration import Configuration
 from hdx.utilities.downloader import Download
 from hdx.utilities.path import progress_storing_tempdir
+from hdx.utilities.session import get_session
+from requests.adapters import HTTPAdapter
 
 from dhs import get_countries, generate_datasets_and_showcase, get_tags, generate_resource_view
 
@@ -32,8 +34,11 @@ def main():
     configuration = Configuration.read()
     base_url = configuration['base_url']
     with Download(extra_params_yaml=join(expanduser('~'), '.extraparams.yml'), extra_params_lookup=lookup) as downloader:
+        downloader.session.mount('http://', HTTPAdapter(max_retries=1, pool_connections=100, pool_maxsize=100))
+        downloader.session.mount('https://', HTTPAdapter(max_retries=1, pool_connections=100, pool_maxsize=100))
         countries = get_countries(base_url, downloader)
         logger.info('Number of countries: %d' % len(countries))
+
         for folder, country in progress_storing_tempdir('DHS', countries, 'iso3'):
             tags = get_tags(base_url, downloader, country['dhscode'])
             dataset, subdataset, showcase, bites_disabled = \
