@@ -83,13 +83,6 @@ def get_dataset(countryiso, tags):
     return dataset
 
 
-def get_column_positions(headers):
-    columnpositions = dict()
-    for i, header in enumerate(headers):
-        columnpositions[header] = i
-    return columnpositions
-
-
 def process_national_row(columnpositions, years, rows, row, countryiso):
     years.add(int(row[columnpositions['SurveyYear']]))
     row.insert(0, countryiso)
@@ -111,10 +104,12 @@ def set_dataset_date_bites(dataset, years, bites_disabled, national_subnational)
     latest_year = years[-1]
     dataset.set_dataset_year_range(years[0], latest_year)
     new_bites_disabled = [True, True, True]
+    ns_bites_disabled = bites_disabled[national_subnational]
     for i, indicator in enumerate(['CM_ECMR_C_IMR', 'HC_ELEC_H_ELC', 'ED_LITR_W_LIT']):
-        indicator_latest_year = sorted(list(bites_disabled[national_subnational][indicator]))[-1]
-        if indicator_latest_year == latest_year:
-            new_bites_disabled[i] = False
+        if indicator in ns_bites_disabled:
+            indicator_latest_year = sorted(list(ns_bites_disabled[indicator]))[-1]
+            if indicator_latest_year == latest_year:
+                new_bites_disabled[i] = False
     bites_disabled[national_subnational] = new_bites_disabled
 
 
@@ -163,7 +158,7 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
         url = '%sdata/%s?tagids=%s&breakdown=national&perpage=10000&f=csv' % (base_url, dhscountrycode, dhstag['TagID'])
         generator = downloader.get_tabular_rows(url, format='csv')
         headers = next(generator)
-        columnpositions = get_column_positions(headers)
+        columnpositions = downloader.get_column_positions(headers)
         headers.insert(0, 'ISO3')
         rows = [headers, [hxltags.get(header, '') for header in headers]]
         if tagname == 'DHS Quickstats':
@@ -186,7 +181,7 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
         try:
             generator = downloader.get_tabular_rows(url, format='csv')
             headers = next(generator)
-            columnpositions = get_column_positions(headers)
+            columnpositions = downloader.get_column_positions(headers)
 
             headers.insert(0, 'Location')
             headers.insert(0, 'ISO3')

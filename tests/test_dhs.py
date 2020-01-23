@@ -8,6 +8,8 @@ import copy
 from os.path import join
 
 import pytest
+
+import hdx
 from hdx.data.dataset import Dataset
 from hdx.data.vocabulary import Vocabulary
 from hdx.hdx_configuration import Configuration
@@ -104,6 +106,10 @@ class TestDHS():
                 if file is None:
                     raise ValueError('No file - url %s was not recognised!' % url)
                 return (x for x in read_list_from_csv(join('tests', 'fixtures', file)))
+
+            @staticmethod
+            def get_column_positions(header):
+                return hdx.utilities.downloader.Download.get_column_positions(header)
 
         return Download()
 

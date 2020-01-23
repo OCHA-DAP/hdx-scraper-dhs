@@ -25,7 +25,7 @@ lookup = 'hdx-scraper-dhs'
 def createdataset(dataset):
     dataset.update_from_yaml()
     dataset['license_other'] = dataset['license_other'].replace('\n', '  \n')  # ensure markdown has line breaks
-    dataset.create_in_hdx(remove_additional_resources=True, hxl_update=False)
+    dataset.create_in_hdx(remove_additional_resources=True, hxl_update=False, updated_by_script='HDX Scraper: DHS')
 
 
 def main():
