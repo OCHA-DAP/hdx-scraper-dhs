@@ -113,6 +113,15 @@ def set_dataset_date_bites(dataset, years, bites_disabled, national_subnational)
     bites_disabled[national_subnational] = new_bites_disabled
 
 
+def process_quickstats_row(row, columnpositions, nationalsubnational):
+    indicatorid = row[columnpositions['IndicatorId']]
+    if indicatorid == 'CM_ECMR_C_IMR':
+        if 'five' in row[columnpositions['ByVariableLabel']].lower():
+            dict_of_sets_add(nationalsubnational, indicatorid, int(row[columnpositions['SurveyYear']]))
+    elif indicatorid in ['HC_ELEC_H_ELC', 'ED_LITR_W_LIT']:
+        dict_of_sets_add(nationalsubnational, indicatorid, int(row[columnpositions['SurveyYear']]))
+
+
 def generate_datasets_and_showcase(configuration, base_url, downloader, folder, country, dhstags):
     """
     """
@@ -163,9 +172,7 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
         rows = [headers, [hxltags.get(header, '') for header in headers]]
         if tagname == 'DHS Quickstats':
             for row in generator:
-                indicatorid = row[columnpositions['IndicatorId']]
-                if indicatorid in ['CM_ECMR_C_IMR', 'HC_ELEC_H_ELC', 'ED_LITR_W_LIT']:
-                    dict_of_sets_add(bites_disabled['national'], indicatorid, int(row[columnpositions['SurveyYear']]))
+                process_quickstats_row(row, columnpositions, bites_disabled['national'])
                 process_national_row(columnpositions, years, rows, row, countryiso)
         else:
             for row in generator:
@@ -188,10 +195,7 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
             rows = [headers, [hxltags.get(header, '') for header in headers]]
             if tagname == 'DHS Quickstats':
                 for row in generator:
-                    indicatorid = row[columnpositions['IndicatorId']]
-                    if indicatorid in ['CM_ECMR_C_IMR', 'HC_ELEC_H_ELC', 'ED_LITR_W_LIT']:
-                        dict_of_sets_add(bites_disabled['subnational'], indicatorid,
-                                         int(row[columnpositions['SurveyYear']]))
+                    process_quickstats_row(row, columnpositions, bites_disabled['subnational'])
                     process_subnational_row(columnpositions, subyears, rows, row, countryiso)
             else:
                 for row in generator:
