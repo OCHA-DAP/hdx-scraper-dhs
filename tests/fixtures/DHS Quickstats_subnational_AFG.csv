@@ -1,5 +1,5 @@
 ISO3,Location,DataId,Indicator,Value,Precision,DHS_CountryCode,CountryName,SurveyYear,SurveyId,IndicatorId,IndicatorOrder,IndicatorType,CharacteristicId,CharacteristicOrder,CharacteristicCategory,CharacteristicLabel,ByVariableId,ByVariableLabel,IsTotal,IsPreferred,SDRID,RegionId,SurveyYearLabel,SurveyType,DenominatorWeighted,DenominatorUnweighted,CILow,CIHigh
-#country+code,#loc+name,#meta+id,#indicator+name,#indicator+value+num,#indicator+precision,,#country+name,#date+year,#survey+id,#indicator+code,,,,,,,,,,,,,,,,,,
+#country+code,#loc+name,#meta+id,#indicator+name,#indicator+value+num,#indicator+precision,,#country+name,#date+year,#survey+id,#indicator+code,,,,,,,#indicator+label+code,#indicator+label,,,,,,,,,,
 AFG,Kabul,2054706,Total fertility rate 15-49,4.6,1,AF,Afghanistan,2015,AF2015DHS,FE_FRTR_W_TFR,11763080,I,534001,1534001,Region,Kabul,0,,0,1,FEFRTRWTFR,AFDHS2015534001,2015,DHS,,,,
 AFG,Paktika,2059715,Total fertility rate 15-49,5.3,1,AF,Afghanistan,2015,AF2015DHS,FE_FRTR_W_TFR,11763080,I,534012,1534012,Region,..Paktika,0,,0,1,FEFRTRWTFR,AFDHS2015534012,2015,DHS,,,,
 AFG,Badakhshan,2054719,Total fertility rate 15-49,5.3,1,AF,Afghanistan,2015,AF2015DHS,FE_FRTR_W_TFR,11763080,I,534017,1534017,Region,Badakhshan,0,,0,1,FEFRTRWTFR,AFDHS2015534017,2015,DHS,,,,

@@ -1,5 +1,5 @@
 ISO3,DataId,Indicator,Value,Precision,DHS_CountryCode,CountryName,SurveyYear,SurveyId,IndicatorId,IndicatorOrder,IndicatorType,CharacteristicId,CharacteristicOrder,CharacteristicCategory,CharacteristicLabel,ByVariableId,ByVariableLabel,IsTotal,IsPreferred,SDRID,RegionId,SurveyYearLabel,SurveyType,DenominatorWeighted,DenominatorUnweighted,CILow,CIHigh
-#country+code,#meta+id,#indicator+name,#indicator+value+num,#indicator+precision,,#country+name,#date+year,#survey+id,#indicator+code,,,,,,,,,,,,,,,,,,
+#country+code,#meta+id,#indicator+name,#indicator+value+num,#indicator+precision,,#country+name,#date+year,#survey+id,#indicator+code,,,,,,,#indicator+label+code,#indicator+label,,,,,,,,,,
 AFG,278763,Total fertility rate 15-49,5.3,1,AF,Afghanistan,2015,AF2015DHS,FE_FRTR_W_TFR,11763080,I,1000,0,Total,Total,0,,1,1,FEFRTRWTFR,,2015,DHS,,,,
 AFG,330746,Married women currently using any method of contraception,22.5,1,AF,Afghanistan,2015,AF2015DHS,FP_CUSM_W_ANY,32633010,I,1000,0,Total,Total,0,,1,1,FPCUSMWANY,,2015,DHS,28671,28661,,
 AFG,330747,Married women currently using any modern method of contraception,19.8,1,AF,Afghanistan,2015,AF2015DHS,FP_CUSM_W_MOD,32633020,I,1000,0,Total,Total,0,,1,1,FPCUSMWMOD,,2015,DHS,28671,28661,,

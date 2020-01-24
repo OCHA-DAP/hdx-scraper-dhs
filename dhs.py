@@ -25,7 +25,8 @@ logger = logging.getLogger(__name__)
 description = 'Contains data from the [DHS data portal](https://api.dhsprogram.com/). There is also a dataset containing [%s](%s) on HDX.\n\nThe DHS Program Application Programming Interface (API) provides software developers access to aggregated indicator data from The Demographic and Health Surveys (DHS) Program. The API can be used to create various applications to help analyze, visualize, explore and disseminate data on population, health, HIV, and nutrition from more than 90 countries.'
 hxltags = {'ISO3': '#country+code', 'Location': '#loc+name', 'DataId': '#meta+id', 'Indicator': '#indicator+name',
            'Value': '#indicator+value+num', 'Precision': '#indicator+precision', 'CountryName': '#country+name',
-           'SurveyYear': '#date+year', 'SurveyId': '#survey+id', 'IndicatorId': '#indicator+code'}
+           'SurveyYear': '#date+year', 'SurveyId': '#survey+id', 'IndicatorId': '#indicator+code',
+           'ByVariableId': '#indicator+label+code', 'ByVariableLabel': '#indicator+label'}
 
 
 def get_countries(base_url, downloader):
@@ -116,7 +117,7 @@ def set_dataset_date_bites(dataset, years, bites_disabled, national_subnational)
 def process_quickstats_row(row, columnpositions, nationalsubnational):
     indicatorid = row[columnpositions['IndicatorId']]
     if indicatorid == 'CM_ECMR_C_IMR':
-        if 'five' in row[columnpositions['ByVariableLabel']].lower():
+        if 'ten' in row[columnpositions['ByVariableLabel']].lower():
             dict_of_sets_add(nationalsubnational, indicatorid, int(row[columnpositions['SurveyYear']]))
     elif indicatorid in ['HC_ELEC_H_ELC', 'ED_LITR_W_LIT']:
         dict_of_sets_add(nationalsubnational, indicatorid, int(row[columnpositions['SurveyYear']]))
