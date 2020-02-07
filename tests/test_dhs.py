@@ -9,7 +9,6 @@ from os.path import join
 
 import pytest
 
-import hdx
 from hdx.data.dataset import Dataset
 from hdx.data.vocabulary import Vocabulary
 from hdx.hdx_configuration import Configuration
@@ -91,12 +90,19 @@ class TestDHS():
                 return response
 
             @staticmethod
-            def get_tabular_rows(url, format):
+            def get_tabular_rows(url, **kwargs):
                 file = None
+                headers = ['ISO3', 'DataId', 'Indicator', 'Value', 'Precision', 'DHS_CountryCode', 'CountryName',
+                           'SurveyYear', 'SurveyId', 'IndicatorId', 'IndicatorOrder', 'IndicatorType',
+                           'CharacteristicId', 'CharacteristicOrder', 'CharacteristicCategory',
+                           'CharacteristicLabel', 'ByVariableId', 'ByVariableLabel', 'IsTotal', 'IsPreferred',
+                           'SDRID', 'RegionId', 'SurveyYearLabel', 'SurveyType', 'DenominatorWeighted',
+                           'DenominatorUnweighted', 'CILow', 'CIHigh']
                 if url == 'http://haha/data/AF?tagids=0&breakdown=national&perpage=10000&f=csv':
                     file = 'afg0national.csv'
                 elif url == 'http://haha/data/AF?tagids=0&breakdown=subnational&perpage=10000&f=csv':
                     file = 'afg0subnational.csv'
+                    headers.insert(1, 'Location')
                 elif url == 'http://haha/data/AF?tagids=77&breakdown=national&perpage=10000&f=csv':
                     file = 'afg77national.csv'
                 elif url == 'http://haha/data/AF?tagids=77&breakdown=subnational&perpage=10000&f=csv':
@@ -105,11 +111,16 @@ class TestDHS():
                     raise ex
                 if file is None:
                     raise ValueError('No file - url %s was not recognised!' % url)
-                return (x for x in read_list_from_csv(join('tests', 'fixtures', file)))
+                rows = read_list_from_csv(join('tests', 'fixtures', file), headers=1, dict_form=True)
+                for row in rows:
+                    row['ISO3'] = 'AFG'
+                    if 'Location' in headers:
+                        row['Location'] = row['CharacteristicLabel'].replace('..', '')
+                return headers, rows
 
             @staticmethod
-            def get_column_positions(header):
-                return hdx.utilities.downloader.Download.get_column_positions(header)
+            def hxl_row(headers, hxltags):
+                return {header: hxltags.get(header, '') for header in headers}
 
         return Download()
 
