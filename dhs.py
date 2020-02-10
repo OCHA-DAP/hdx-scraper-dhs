@@ -145,12 +145,16 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
     def generate_resource(url, years, insertions, tagname, national, ds):
         headers, iterator = downloader.get_tabular_rows(url, dict_form=True, insertions=insertions, format='csv')
         rows = [downloader.hxl_row(headers, hxltags, dict_form=True)]
+        norows = 0
         for row in iterator:
+            norows += 1
             rows.append(row)
             years.add(int(row['SurveyYear']))
             if tagname == 'DHS Quickstats':
                 process_quickstats_row(row, bites_disabled[national])
-
+        if norows == 0:
+            logger.error('Could not download data for %s - %s - %s!' % (countryname, national, tagname))
+            return
         filepath = join(folder, '%s_%s_%s.csv' % (tagname, national, countryiso))
         write_list_to_csv(filepath, rows, headers=headers)
         resource = Resource(resourcedata)
