@@ -10,7 +10,6 @@ from os.path import join, expanduser
 from hdx.hdx_configuration import Configuration
 from hdx.utilities.downloader import Download
 from hdx.utilities.path import progress_storing_tempdir
-from hdx.utilities.session import get_session
 from requests.adapters import HTTPAdapter
 
 from dhs import get_countries, generate_datasets_and_showcase, get_tags, generate_resource_view
