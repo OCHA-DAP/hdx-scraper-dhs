@@ -144,7 +144,7 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
 
     def generate_resource(url, years, insertions, tagname, national, ds):
         headers, iterator = downloader.get_tabular_rows(url, dict_form=True, insertions=insertions, format='csv')
-        rows = [downloader.hxl_row(headers, hxltags)]
+        rows = [downloader.hxl_row(headers, hxltags, dict_form=True)]
         for row in iterator:
             rows.append(row)
             years.add(int(row['SurveyYear']))

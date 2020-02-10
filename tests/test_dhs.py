@@ -119,7 +119,7 @@ class TestDHS():
                 return headers, rows
 
             @staticmethod
-            def hxl_row(headers, hxltags):
+            def hxl_row(headers, hxltags, dict_form):
                 return {header: hxltags.get(header, '') for header in headers}
 
         return Download()
