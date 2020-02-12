@@ -142,28 +142,11 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
     years = set()
     subyears = set()
 
-    def generate_resource(url, years, insertions, tagname, national, ds):
-        headers, iterator = downloader.get_tabular_rows(url, dict_form=True, insertions=insertions, format='csv')
-        rows = [downloader.hxl_row(headers, hxltags, dict_form=True)]
-        norows = 0
-        for row in iterator:
-            norows += 1
-            rows.append(row)
-            years.add(int(row['SurveyYear']))
-            if tagname == 'DHS Quickstats':
-                process_quickstats_row(row, bites_disabled[national])
-        if norows == 0:
-            logger.error('Could not download data for %s - %s - %s!' % (countryname, national, tagname))
-            return
-        filepath = join(folder, '%s_%s_%s.csv' % (tagname, national, countryiso))
-        write_list_to_csv(filepath, rows, headers=headers)
-        resource = Resource(resourcedata)
-        resource.set_file_type('csv')
-        resource.set_file_to_upload(filepath)
-        ds.add_update_resource(resource)
-
     def process_national_row(_, row):
         row['ISO3'] = countryiso
+        years.add(int(row['SurveyYear']))
+        if tagname == 'DHS Quickstats':
+            process_quickstats_row(row, bites_disabled['national'])
         return row
 
     def process_subnational_row(_, row):
@@ -172,10 +155,10 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
         if val[:2] == '..':
             val = val[2:]
         row['Location'] = val
+        subyears.add(int(row['SurveyYear']))
+        if tagname == 'DHS Quickstats':
+            process_quickstats_row(row, bites_disabled['subnational'])
         return row
-
-    national_insertions = {'headers': [(0, 'ISO3')], 'function': process_national_row}
-    subnational_insertions = {'headers': [(0, 'ISO3'), (1, 'Location')], 'function': process_subnational_row}
 
     for dhstag in dhstags:
         tagname = dhstag['TagName'].strip()
@@ -186,11 +169,16 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
         }
 
         url = '%sdata/%s?tagids=%s&breakdown=national&perpage=10000&f=csv' % (base_url, dhscountrycode, dhstag['TagID'])
-        generate_resource(url, years, national_insertions, tagname, 'national', dataset)
+        filename = '%s_national_%s.csv' % (tagname, countryiso)
+        dataset.generate_resource_from_download(downloader, url, hxltags, folder, filename, resourcedata,
+                                                header_insertions=[(0, 'ISO3')], row_function=process_national_row)
 
         url = url.replace('breakdown=national', 'breakdown=subnational')
+        filename = '%s_subnational_%s.csv' % (tagname, countryiso)
         try:
-            generate_resource(url, subyears, subnational_insertions, tagname, 'subnational', subdataset)
+            subdataset.generate_resource_from_download(downloader, url, hxltags, folder, filename, resourcedata,
+                                                       header_insertions=[(0, 'ISO3'), (1, 'Location')],
+                                                       row_function=process_subnational_row)
         except DownloadError as ex:
             cause = ex.__cause__
             if cause is not None:

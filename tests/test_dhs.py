@@ -113,9 +113,7 @@ class TestDHS():
                     raise ValueError('No file - url %s was not recognised!' % url)
                 rows = read_list_from_csv(join('tests', 'fixtures', file), headers=1, dict_form=True)
                 for row in rows:
-                    row['ISO3'] = 'AFG'
-                    if 'Location' in headers:
-                        row['Location'] = row['CharacteristicLabel'].replace('..', '')
+                    kwargs['row_function'](headers, row)
                 return headers, rows
 
             @staticmethod
