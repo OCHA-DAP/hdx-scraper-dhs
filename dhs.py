@@ -139,12 +139,8 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
 
     bites_disabled = {'national': dict(), 'subnational': dict()}
 
-    years = set()
-    subyears = set()
-
     def process_national_row(_, row):
         row['ISO3'] = countryiso
-        years.add(int(row['SurveyYear']))
         if tagname == 'DHS Quickstats':
             process_quickstats_row(row, bites_disabled['national'])
         return row
@@ -155,7 +151,6 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
         if val[:2] == '..':
             val = val[2:]
         row['Location'] = val
-        subyears.add(int(row['SurveyYear']))
         if tagname == 'DHS Quickstats':
             process_quickstats_row(row, bites_disabled['subnational'])
         return row
@@ -170,15 +165,17 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
 
         url = '%sdata/%s?tagids=%s&breakdown=national&perpage=10000&f=csv' % (base_url, dhscountrycode, dhstag['TagID'])
         filename = '%s_national_%s.csv' % (tagname, countryiso)
-        dataset.generate_resource_from_download(downloader, url, hxltags, folder, filename, resourcedata,
-                                                header_insertions=[(0, 'ISO3')], row_function=process_national_row)
+        years = dataset.generate_resource_from_download(downloader, url, hxltags, folder, filename, resourcedata,
+                                                        header_insertions=[(0, 'ISO3')],
+                                                        row_function=process_national_row, yearcol='SurveyYear')
 
         url = url.replace('breakdown=national', 'breakdown=subnational')
         filename = '%s_subnational_%s.csv' % (tagname, countryiso)
         try:
-            subdataset.generate_resource_from_download(downloader, url, hxltags, folder, filename, resourcedata,
-                                                       header_insertions=[(0, 'ISO3'), (1, 'Location')],
-                                                       row_function=process_subnational_row)
+            insertions = [(0, 'ISO3'), (1, 'Location')]
+            subyears = subdataset.generate_resource_from_download(
+                downloader, url, hxltags, folder, filename, resourcedata, header_insertions=insertions,
+                row_function=process_subnational_row, yearcol='SurveyYear')
         except DownloadError as ex:
             cause = ex.__cause__
             if cause is not None:
