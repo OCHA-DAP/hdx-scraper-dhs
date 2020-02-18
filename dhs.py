@@ -9,14 +9,12 @@ Generates HXlated API urls from the DHS website.
 """
 import json
 import logging
-from os.path import join
 
 from hdx.data.dataset import Dataset
-from hdx.data.resource import Resource
 from hdx.data.resource_view import ResourceView
 from hdx.data.showcase import Showcase
 from hdx.location.country import Country
-from hdx.utilities.dictandlist import write_list_to_csv, dict_of_sets_add
+from hdx.utilities.dictandlist import dict_of_sets_add
 from hdx.utilities.downloader import DownloadError
 from slugify import slugify
 
@@ -155,6 +153,9 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
             process_quickstats_row(row, bites_disabled['subnational'])
         return row
 
+    years = set()
+    subyears = set()
+
     for dhstag in dhstags:
         tagname = dhstag['TagName'].strip()
         resource_name = '%s Data for %s' % (tagname, countryname)
@@ -165,17 +166,19 @@ def generate_datasets_and_showcase(configuration, base_url, downloader, folder, 
 
         url = '%sdata/%s?tagids=%s&breakdown=national&perpage=10000&f=csv' % (base_url, dhscountrycode, dhstag['TagID'])
         filename = '%s_national_%s.csv' % (tagname, countryiso)
-        years = dataset.generate_resource_from_download(downloader, url, hxltags, folder, filename, resourcedata,
-                                                        header_insertions=[(0, 'ISO3')],
-                                                        row_function=process_national_row, yearcol='SurveyYear')
+        _, results = dataset.download_and_generate_resource(
+            downloader, url, hxltags, folder, filename, resourcedata, header_insertions=[(0, 'ISO3')],
+            row_function=process_national_row, yearcol='SurveyYear')
+        years.update(results['years'])
 
         url = url.replace('breakdown=national', 'breakdown=subnational')
         filename = '%s_subnational_%s.csv' % (tagname, countryiso)
         try:
             insertions = [(0, 'ISO3'), (1, 'Location')]
-            subyears = subdataset.generate_resource_from_download(
+            _, results = subdataset.download_and_generate_resource(
                 downloader, url, hxltags, folder, filename, resourcedata, header_insertions=insertions,
                 row_function=process_subnational_row, yearcol='SurveyYear')
+            subyears.update(results['years'])
         except DownloadError as ex:
             cause = ex.__cause__
             if cause is not None:
