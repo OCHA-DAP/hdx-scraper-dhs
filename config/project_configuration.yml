@@ -1,3 +1,2 @@
 # Collector specific configuration
 base_url: "https://api.dhsprogram.com/rest/dhs/"
-hxlproxy_url: "https://proxy.hxlstandard.org/data.csv?"
