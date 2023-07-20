@@ -239,27 +239,14 @@ class TestDHS:
 
         class Download:
             @staticmethod
-            def download(url):
-                response = Response()
+            def download_json(url):
                 if url == "http://haha/countries":
-
-                    def fn():
-                        return {"Data": [TestDHS.countrydata]}
-
-                    response.json = fn
+                    return {"Data": [TestDHS.countrydata]}
                 elif url == "http://haha/tags/AF":
-
-                    def fn():
-                        return {"Data": TestDHS.tags}
-
-                    response.json = fn
+                    return {"Data": TestDHS.tags}
                 elif url == "http://haha/publications/AF":
-
-                    def fn():
-                        return {"Data": TestDHS.publications}
-
-                    response.json = fn
-                return response
+                    return {"Data": TestDHS.publications}
+                return {}
 
             @staticmethod
             def get_tabular_rows(url, **kwargs):
