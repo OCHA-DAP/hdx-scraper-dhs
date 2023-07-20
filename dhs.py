@@ -187,21 +187,33 @@ def generate_datasets_and_showcase(
 
         url = f"{base_url}data/{dhscountrycode}?tagids={dhstag['TagID']}&breakdown=national&perpage=10000&f=csv"
         filename = f"{tagname}_national_{countryiso}.csv"
-        _, results = dataset.download_and_generate_resource(
-            downloader,
-            url,
-            hxltags,
-            folder,
-            filename,
-            resourcedata,
-            header_insertions=[(0, "ISO3")],
-            row_function=process_national_row,
-            yearcol="SurveyYear",
-        )
-        if earliest_startdate > results["startdate"]:
-            earliest_startdate = results["startdate"]
-        if latest_enddate < results["enddate"]:
-            latest_enddate = results["enddate"]
+        try:
+            _, results = dataset.download_and_generate_resource(
+                downloader,
+                url,
+                hxltags,
+                folder,
+                filename,
+                resourcedata,
+                header_insertions=[(0, "ISO3")],
+                row_function=process_national_row,
+                yearcol="SurveyYear",
+            )
+            if earliest_startdate > results["startdate"]:
+                earliest_startdate = results["startdate"]
+            if latest_enddate < results["enddate"]:
+                latest_enddate = results["enddate"]
+        except DownloadError as ex:
+            cause = ex.__cause__
+            if cause is not None:
+                cause = str(cause)
+                if (
+                    "Variable RET is undefined" not in cause
+                    and "No such file or directory: 'saved_data" not in cause
+                ):
+                    raise ex
+            else:
+                raise ex
 
         url = url.replace("breakdown=national", "breakdown=subnational")
         filename = f"{tagname}_subnational_{countryiso}.csv"
