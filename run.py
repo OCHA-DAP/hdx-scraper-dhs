@@ -6,8 +6,6 @@ Top level script. Calls other functions that generate datasets that this script 
 import logging
 from os.path import expanduser, join
 
-from hdx.utilities.retriever import Retrieve
-
 from dhs import (
     generate_datasets_and_showcase,
     generate_resource_view,
@@ -17,8 +15,8 @@ from dhs import (
 from hdx.api.configuration import Configuration
 from hdx.facades.infer_arguments import facade
 from hdx.utilities.downloader import Download
-from hdx.utilities.path import progress_storing_tempdir, \
-    wheretostart_tempdir_batch
+from hdx.utilities.path import progress_storing_tempdir, wheretostart_tempdir_batch
+from hdx.utilities.retriever import Retrieve
 from requests.adapters import HTTPAdapter
 
 logger = logging.getLogger(__name__)
@@ -87,7 +85,8 @@ def main(save: bool = False, use_saved: bool = False) -> None:
                     resource_view = generate_resource_view(
                         dataset, bites_disabled=bites_disabled["national"]
                     )
-                    resource_view.create_in_hdx()
+                    if resource_view:
+                        resource_view.create_in_hdx()
                     if showcase:
                         showcase.create_in_hdx()
                         showcase.add_dataset(dataset)
@@ -98,7 +97,8 @@ def main(save: bool = False, use_saved: bool = False) -> None:
                     resource_view = generate_resource_view(
                         subdataset, bites_disabled=bites_disabled["subnational"]
                     )
-                    resource_view.create_in_hdx()
+                    if resource_view:
+                        resource_view.create_in_hdx()
 
 
 if __name__ == "__main__":
