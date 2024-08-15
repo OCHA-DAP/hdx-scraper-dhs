@@ -213,7 +213,7 @@ class TestDHS:
             hdx_site="feature",
             user_agent="test",
             hdx_key="12345",
-            project_config_yaml=join("tests", "config", "project_configuration.yml"),
+            project_config_yaml=join("tests", "config", "project_configuration.yaml"),
         )
         Locations.set_validlocations(
             [

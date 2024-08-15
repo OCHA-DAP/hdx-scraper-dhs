@@ -96,7 +96,7 @@ def get_dataset(countryiso, tags):
 def set_dataset_date_bites(
     dataset, startdate, enddate, bites_disabled, national_subnational
 ):
-    dataset.set_reference_period(startdate, enddate)
+    dataset.set_time_period(startdate, enddate)
     latest_year = enddate.year
     new_bites_disabled = [True, True, True]
     ns_bites_disabled = bites_disabled[national_subnational]
