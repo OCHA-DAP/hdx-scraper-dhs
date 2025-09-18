@@ -3,7 +3,12 @@
 [![Coverage Status](https://coveralls.io/repos/github/OCHA-DAP/hdx-scraper-dhs/badge.svg?branch=main&ts=1)](https://coveralls.io/github/OCHA-DAP/hdx-scraper-dhs?branch=main)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-This script connects to the [DHS API](http://api.dhsprogram.com/#/api-data.cfm) and extracts data country by country creating two datasets per country in HDX (national and subnational). The scraper takes around 10 hours to run. It makes in the order of 200 reads from DHS and 1000 read/writes (API calls) to HDX in total. It creates around 7000 temporary files of at most 1Mb in size and uploads them into HDX. It will be run monthly. 
+This script connects to the [DHS API](http://api.dhsprogram.com/#/api-data.cfm) and
+extracts data country by country creating two datasets per country in HDX (national and
+subnational). The scraper takes around 10 hours to run. It makes in the order of 200
+reads from DHS and 1000 read/writes (API calls) to HDX in total. It creates around 7000
+temporary files of at most 1Mb in size and uploads them into HDX. It will be run
+monthly.
 
 ## Development
 
