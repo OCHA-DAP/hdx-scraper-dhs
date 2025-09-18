@@ -16,13 +16,14 @@ from hdx.utilities.path import (
     wheretostart_tempdir_batch,
 )
 from hdx.utilities.retriever import Retrieve
-from pipeline import (
+from requests.adapters import HTTPAdapter
+
+from hdx.scraper.dhs.pipeline import (
     generate_datasets_and_showcase,
     generate_resource_view,
     get_countries,
     get_tags,
 )
-from requests.adapters import HTTPAdapter
 
 logger = logging.getLogger(__name__)
 
