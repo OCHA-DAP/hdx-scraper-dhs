@@ -380,7 +380,7 @@ class TestDHS:
             file = "DHS Quickstats_subnational_AFG.csv"
             assert_files_same(join("tests", "fixtures", file), join(folder, file))
 
-    def test_generate_resource_view(self):
+    def test_generate_resource_view(self, configuration):
         dataset = Dataset(TestDHS.dataset)
         resource = copy.deepcopy(TestDHS.resources[0])
         resource["id"] = "123"
