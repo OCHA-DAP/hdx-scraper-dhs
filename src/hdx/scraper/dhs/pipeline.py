@@ -6,8 +6,10 @@ DHS:
 Generates HXlated API urls from the DHS website.
 
 """
+
 import json
 import logging
+from os.path import join
 
 from hdx.data.dataset import Dataset
 from hdx.data.resource_view import ResourceView
@@ -16,6 +18,7 @@ from hdx.location.country import Country
 from hdx.utilities.dateparse import default_date, default_enddate
 from hdx.utilities.dictandlist import dict_of_sets_add
 from hdx.utilities.downloader import DownloadError
+from hdx.utilities.path import script_dir_plus_file
 from slugify import slugify
 
 logger = logging.getLogger(__name__)
@@ -285,7 +288,11 @@ def generate_resource_view(dataset, quickchart_resourceno=0, bites_disabled=None
     resourceview = ResourceView(
         {"resource_id": dataset.get_resource(quickchart_resourceno)["id"]}
     )
-    resourceview.update_from_yaml()
+    resourceview.update_from_yaml(
+        script_dir_plus_file(
+            join("config", "hdx_resource_view_static.yaml"), get_countries
+        )
+    )
     hxl_preview_config = json.loads(resourceview["hxl_preview_config"])
     bites = hxl_preview_config["bites"]
     if bites_disabled is not None:

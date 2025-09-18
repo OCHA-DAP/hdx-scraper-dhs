@@ -3,26 +3,28 @@
 Unit tests for DHS
 
 """
+
 import copy
 from os.path import join
 
 import pytest
-from dhs import (
+from hdx.api.configuration import Configuration
+from hdx.api.locations import Locations
+from hdx.data.dataset import Dataset
+from hdx.data.vocabulary import Vocabulary
+from hdx.location.country import Country
+from hdx.utilities.compare import assert_files_same
+from hdx.utilities.dictandlist import read_list_from_csv
+from hdx.utilities.downloader import DownloadError
+from hdx.utilities.path import temp_dir
+
+from hdx.scraper.dhs.pipeline import (
     generate_datasets_and_showcase,
     generate_resource_view,
     get_countries,
     get_publication,
     get_tags,
 )
-from hdx.data.dataset import Dataset
-from hdx.data.vocabulary import Vocabulary
-from hdx.api.configuration import Configuration
-from hdx.api.locations import Locations
-from hdx.location.country import Country
-from hdx.utilities.compare import assert_files_same
-from hdx.utilities.dictandlist import read_list_from_csv
-from hdx.utilities.downloader import DownloadError
-from hdx.utilities.path import temp_dir
 
 
 class TestDHS:
@@ -167,15 +169,11 @@ class TestDHS:
             "name": "DHS Quickstats Data for Afghanistan",
             "description": "HXLated csv containing DHS Quickstats data",
             "format": "csv",
-            "resource_type": "file.upload",
-            "url_type": "upload",
         },
         {
             "name": "DHS Mobile Data for Afghanistan",
             "description": "HXLated csv containing DHS Mobile data",
             "format": "csv",
-            "resource_type": "file.upload",
-            "url_type": "upload",
         },
     ]
     subdataset = {
@@ -202,8 +200,6 @@ class TestDHS:
             "name": "DHS Quickstats Data for Afghanistan",
             "description": "HXLated csv containing DHS Quickstats data",
             "format": "csv",
-            "resource_type": "file.upload",
-            "url_type": "upload",
         }
     ]
 
@@ -388,9 +384,9 @@ class TestDHS:
         dataset = Dataset(TestDHS.dataset)
         resource = copy.deepcopy(TestDHS.resources[0])
         resource["id"] = "123"
-        resource[
-            "url"
-        ] = "https://test-data.humdata.org/dataset/495bf9ef-afab-41ac-a804-ca5978aa4213/resource/703d04ef-1787-44b1-92d5-c4ddd283d33f/download/dhs-quickstats_national_afg.csv"
+        resource["url"] = (
+            "https://test-data.humdata.org/dataset/495bf9ef-afab-41ac-a804-ca5978aa4213/resource/703d04ef-1787-44b1-92d5-c4ddd283d33f/download/dhs-quickstats_national_afg.csv"
+        )
         dataset.add_update_resource(resource)
         resource_view = generate_resource_view(
             dataset, bites_disabled=[True, True, True]
