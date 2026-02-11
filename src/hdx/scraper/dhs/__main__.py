@@ -5,6 +5,7 @@ Top level script. Calls other functions that generate datasets that this script 
 """
 
 import logging
+from os import getenv
 from os.path import expanduser, join
 
 from hdx.api.configuration import Configuration
@@ -27,7 +28,7 @@ from hdx.scraper.dhs.pipeline import (
 
 logger = logging.getLogger(__name__)
 
-lookup = "hdx-scraper-dhs"
+_LOOKUP = "hdx-scraper-dhs"
 
 
 def createdataset(dataset, info):
@@ -43,7 +44,7 @@ def createdataset(dataset, info):
     dataset.create_in_hdx(
         remove_additional_resources=True,
         hxl_update=False,
-        updated_by_script=lookup,
+        updated_by_script=_LOOKUP,
         batch=info["batch"],
     )
 
@@ -61,11 +62,17 @@ def main(save: bool = False, use_saved: bool = False) -> None:
 
     configuration = Configuration.read()
     base_url = configuration["base_url"]
-    with wheretostart_tempdir_batch(lookup) as info:
+    with wheretostart_tempdir_batch(_LOOKUP) as info:
         folder = info["folder"]
+        dhs_key = getenv("APIKEY")
+        if dhs_key:
+            extra_params_dict = {"apiKey": dhs_key}
+        else:
+            extra_params_dict = None
         with Download(
+            extra_params_dict=extra_params_dict,
             extra_params_yaml=join(expanduser("~"), ".extraparams.yaml"),
-            extra_params_lookup=lookup,
+            extra_params_lookup=_LOOKUP,
         ) as downloader:
             downloader.session.mount(
                 "http://",
@@ -116,7 +123,7 @@ if __name__ == "__main__":
     facade(
         main,
         user_agent_config_yaml=join(expanduser("~"), ".useragents.yaml"),
-        user_agent_lookup=lookup,
+        user_agent_lookup=_LOOKUP,
         project_config_yaml=script_dir_plus_file(
             join("config", "project_configuration.yaml"), main
         ),
