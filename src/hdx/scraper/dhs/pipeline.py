@@ -78,15 +78,6 @@ def get_dataset(countryiso, tags):
     return dataset
 
 
-def process_quickstats_row(row, nationalsubnational):
-    indicatorid = row["IndicatorId"]
-    if indicatorid == "CM_ECMR_C_IMR":
-        if "ten" in row["ByVariableLabel"].lower():
-            dict_of_sets_add(nationalsubnational, indicatorid, int(row["SurveyYear"]))
-    elif indicatorid in ["HC_ELEC_H_ELC", "ED_LITR_W_LIT"]:
-        dict_of_sets_add(nationalsubnational, indicatorid, int(row["SurveyYear"]))
-
-
 def generate_datasets_and_showcase(
     configuration, base_url, downloader, folder, country, dhstags
 ):

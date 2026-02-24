@@ -92,7 +92,6 @@ def main(save: bool = False, use_saved: bool = False) -> None:
                     dataset,
                     subdataset,
                     showcase,
-                    bites_disabled,
                 ) = generate_datasets_and_showcase(
                     configuration, base_url, retriever, info["folder"], country, tags
                 )
