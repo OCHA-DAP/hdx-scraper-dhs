@@ -8,8 +8,11 @@ import logging
 from os import getenv
 from os.path import expanduser, join
 
+from dateutil.parser import ParserError
 from hdx.api.configuration import Configuration
+from hdx.data.hdxobject import HDXError
 from hdx.facades.infer_arguments import facade
+from hdx.utilities.base_downloader import DownloadError
 from hdx.utilities.downloader import Download
 from hdx.utilities.path import (
     progress_storing_tempdir,
@@ -18,6 +21,13 @@ from hdx.utilities.path import (
 )
 from hdx.utilities.retriever import Retrieve
 from requests.adapters import HTTPAdapter
+from tenacity import (
+    after_log,
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_fixed,
+)
 
 from hdx.scraper.dhs.pipeline import (
     generate_datasets_and_showcase,
@@ -86,7 +96,17 @@ def main(save: bool = False, use_saved: bool = False) -> None:
             countries = get_countries(base_url, retriever)
             logger.info(f"Number of countries: {len(countries)}")
 
-            for info, country in progress_storing_tempdir("DHS", countries, "iso3"):
+            @retry(
+                retry=(
+                    retry_if_exception_type(DownloadError)
+                    | retry_if_exception_type(HDXError)
+                    | retry_if_exception_type(ParserError)  # happens on temp API issue
+                ),
+                stop=stop_after_attempt(5),
+                wait=wait_fixed(600),
+                after=after_log(logger, logging.INFO),
+            )
+            def process_country(info, country):
                 tags = get_tags(base_url, retriever, country["dhscode"])
                 (
                     dataset,
@@ -104,6 +124,9 @@ def main(save: bool = False, use_saved: bool = False) -> None:
                     createdataset(subdataset, info)
                     if showcase:
                         showcase.add_dataset(subdataset)
+
+            for info, country in progress_storing_tempdir("DHS", countries, "iso3"):
+                process_country(info, country)
 
 
 if __name__ == "__main__":
