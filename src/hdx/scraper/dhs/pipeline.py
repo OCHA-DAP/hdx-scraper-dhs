@@ -13,7 +13,6 @@ from hdx.data.dataset import Dataset
 from hdx.data.showcase import Showcase
 from hdx.location.country import Country
 from hdx.utilities.dateparse import default_date, default_enddate
-from hdx.utilities.dictandlist import dict_of_sets_add
 from hdx.utilities.downloader import DownloadError
 from slugify import slugify
 
