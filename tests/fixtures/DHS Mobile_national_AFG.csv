@@ -1,5 +1,4 @@
 ISO3,DataId,Indicator,Value,Precision,DHS_CountryCode,CountryName,SurveyYear,SurveyId,IndicatorId,IndicatorOrder,IndicatorType,CharacteristicId,CharacteristicOrder,CharacteristicCategory,CharacteristicLabel,ByVariableId,ByVariableLabel,IsTotal,IsPreferred,SDRID,RegionId,SurveyYearLabel,SurveyType,DenominatorWeighted,DenominatorUnweighted,CILow,CIHigh
-#country+code,#meta+id,#indicator+name,#indicator+value+num,#indicator+precision,,#country+name,#date+year,#survey+id,#indicator+code,,,,,,,#indicator+label+code,#indicator+label,,,,,,,,,,
 AFG,278763,Total fertility rate 15-49,5.3,1,AF,Afghanistan,2015,AF2015DHS,FE_FRTR_W_TFR,11763080,I,1000,0,Total,Total,0,,1,1,FEFRTRWTFR,,2015,DHS,,,,
 AFG,278764,General fertility rate,175,0,AF,Afghanistan,2015,AF2015DHS,FE_FRTR_W_GFR,11763100,I,1000,0,Total,Total,0,,1,1,FEFRTRWGFR,,2015,DHS,,,,
 AFG,278745,Mean number of children ever born,2.95,2,AF,Afghanistan,2015,AF2015DHS,FE_CEBA_W_MNC,11863150,I,1000,0,Total,Total,0,,1,1,FECEBAWMNC,,2015,DHS,42221,41936,,
