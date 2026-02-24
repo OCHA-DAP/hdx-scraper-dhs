@@ -21,7 +21,6 @@ from requests.adapters import HTTPAdapter
 
 from hdx.scraper.dhs.pipeline import (
     generate_datasets_and_showcase,
-    generate_resource_view,
     get_countries,
     get_tags,
 )
@@ -43,7 +42,6 @@ def createdataset(dataset, info):
     )  # ensure markdown has line breaks
     dataset.create_in_hdx(
         remove_additional_resources=True,
-        hxl_update=False,
         updated_by_script=_LOOKUP,
         batch=info["batch"],
     )
@@ -100,11 +98,6 @@ def main(save: bool = False, use_saved: bool = False) -> None:
                 )
                 if dataset:
                     createdataset(dataset, info)
-                    resource_view = generate_resource_view(
-                        dataset, bites_disabled=bites_disabled["national"]
-                    )
-                    if resource_view:
-                        resource_view.create_in_hdx()
                     if showcase:
                         showcase.create_in_hdx()
                         showcase.add_dataset(dataset)
@@ -112,11 +105,6 @@ def main(save: bool = False, use_saved: bool = False) -> None:
                     createdataset(subdataset, info)
                     if showcase:
                         showcase.add_dataset(subdataset)
-                    resource_view = generate_resource_view(
-                        subdataset, bites_disabled=bites_disabled["subnational"]
-                    )
-                    if resource_view:
-                        resource_view.create_in_hdx()
 
 
 if __name__ == "__main__":
