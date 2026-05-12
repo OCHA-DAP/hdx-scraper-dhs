@@ -38,6 +38,7 @@ from hdx.scraper.dhs.pipeline import (
 logger = logging.getLogger(__name__)
 
 _LOOKUP = "hdx-scraper-dhs"
+_UPDATED_BY_SCRIPT = "HDX Scraper: DHS"
 
 
 def createdataset(dataset, info):
@@ -52,7 +53,7 @@ def createdataset(dataset, info):
     )  # ensure markdown has line breaks
     dataset.create_in_hdx(
         remove_additional_resources=True,
-        updated_by_script=_LOOKUP,
+        updated_by_script=_UPDATED_BY_SCRIPT,
         batch=info["batch"],
     )
 
