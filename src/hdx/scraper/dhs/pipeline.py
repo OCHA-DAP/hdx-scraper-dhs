@@ -142,7 +142,7 @@ def generate_datasets_and_showcase(
         url = f"{base_url}data/{dhscountrycode}?tagids={dhstag['TagID']}&breakdown=national&perpage=10000&f=csv"
         filename = f"{tagname}_national_{countryiso}.csv"
         try:
-            _, results = dataset.download_generate_resource(
+            success, results = dataset.download_generate_resource(
                 downloader,
                 url,
                 folder,
@@ -152,10 +152,11 @@ def generate_datasets_and_showcase(
                 row_function=process_national_row,
                 yearcol="SurveyYear",
             )
-            if earliest_startdate > results["startdate"]:
-                earliest_startdate = results["startdate"]
-            if latest_enddate < results["enddate"]:
-                latest_enddate = results["enddate"]
+            if success:
+                if earliest_startdate > results["startdate"]:
+                    earliest_startdate = results["startdate"]
+                if latest_enddate < results["enddate"]:
+                    latest_enddate = results["enddate"]
         except DownloadError as ex:
             cause = ex.__cause__
             if cause is not None:
@@ -172,7 +173,7 @@ def generate_datasets_and_showcase(
         filename = f"{tagname}_subnational_{countryiso}.csv"
         try:
             insertions = [(0, "ISO3"), (1, "Location")]
-            _, results = subdataset.download_generate_resource(
+            success, results = subdataset.download_generate_resource(
                 downloader,
                 url,
                 folder,
@@ -182,10 +183,11 @@ def generate_datasets_and_showcase(
                 row_function=process_subnational_row,
                 yearcol="SurveyYear",
             )
-            if earliest_startdate_sn > results["startdate"]:
-                earliest_startdate_sn = results["startdate"]
-            if latest_enddate_sn < results["enddate"]:
-                latest_enddate_sn = results["enddate"]
+            if success:
+                if earliest_startdate_sn > results["startdate"]:
+                    earliest_startdate_sn = results["startdate"]
+                if latest_enddate_sn < results["enddate"]:
+                    latest_enddate_sn = results["enddate"]
         except DownloadError as ex:
             cause = ex.__cause__
             if cause is not None:
